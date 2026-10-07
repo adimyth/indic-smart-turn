@@ -1,0 +1,44 @@
+[
+ {
+  "shard": "odia/train-00002-of-00080.parquet",
+  "size_bytes": 503810805,
+  "rows": 4929,
+  "conv_rows": 1417,
+  "conv_sessions": 59
+ },
+ {
+  "shard": "odia/train-00003-of-00080.parquet",
+  "size_bytes": 518106725,
+  "rows": 4929,
+  "conv_rows": 1355,
+  "conv_sessions": 58
+ },
+ {
+  "shard": "odia/train-00004-of-00080.parquet",
+  "size_bytes": 534032849,
+  "rows": 4929,
+  "conv_rows": 1247,
+  "conv_sessions": 54
+ },
+ {
+  "shard": "odia/train-00001-of-00080.parquet",
+  "size_bytes": 555198411,
+  "rows": 4929,
+  "conv_rows": 1277,
+  "conv_sessions": 60
+ },
+ {
+  "shard": "odia/valid-00000-of-00001.parquet",
+  "size_bytes": 396505387,
+  "rows": 5245,
+  "conv_rows": 3624,
+  "conv_sessions": 147
+ },
+ {
+  "shard": "odia/train-00000-of-00080.parquet",
+  "size_bytes": 494428650,
+  "rows": 4929,
+  "conv_rows": 1551,
+  "conv_sessions": 67
+ }
+]

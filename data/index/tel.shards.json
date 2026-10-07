@@ -1,0 +1,23 @@
+[
+ {
+  "shard": "telugu/train-00000-of-00061.parquet",
+  "size_bytes": 471251270,
+  "rows": 4415,
+  "conv_rows": 2131,
+  "conv_sessions": 116
+ },
+ {
+  "shard": "telugu/valid-00000-of-00001.parquet",
+  "size_bytes": 345485098,
+  "rows": 3295,
+  "conv_rows": 1705,
+  "conv_sessions": 86
+ },
+ {
+  "shard": "telugu/train-00001-of-00061.parquet",
+  "size_bytes": 452024650,
+  "rows": 4415,
+  "conv_rows": 2170,
+  "conv_sessions": 117
+ }
+]

@@ -1,0 +1,86 @@
+[
+ {
+  "shard": "assamese/valid-00000-of-00002.parquet",
+  "size_bytes": 295664759,
+  "rows": 2531,
+  "conv_rows": 657,
+  "conv_sessions": 22
+ },
+ {
+  "shard": "assamese/train-00000-of-00112.parquet",
+  "size_bytes": 517632005,
+  "rows": 4190,
+  "conv_rows": 750,
+  "conv_sessions": 40
+ },
+ {
+  "shard": "assamese/train-00002-of-00112.parquet",
+  "size_bytes": 540042866,
+  "rows": 4190,
+  "conv_rows": 547,
+  "conv_sessions": 29
+ },
+ {
+  "shard": "assamese/train-00001-of-00112.parquet",
+  "size_bytes": 547147351,
+  "rows": 4190,
+  "conv_rows": 563,
+  "conv_sessions": 29
+ },
+ {
+  "shard": "assamese/valid-00001-of-00002.parquet",
+  "size_bytes": 195932997,
+  "rows": 2531,
+  "conv_rows": 1676,
+  "conv_sessions": 88
+ },
+ {
+  "shard": "assamese/train-00003-of-00112.parquet",
+  "size_bytes": 544105799,
+  "rows": 4190,
+  "conv_rows": 547,
+  "conv_sessions": 28
+ },
+ {
+  "shard": "assamese/train-00007-of-00112.parquet",
+  "size_bytes": 538910118,
+  "rows": 4190,
+  "conv_rows": 731,
+  "conv_sessions": 46
+ },
+ {
+  "shard": "assamese/train-00006-of-00112.parquet",
+  "size_bytes": 517139247,
+  "rows": 4190,
+  "conv_rows": 873,
+  "conv_sessions": 46
+ },
+ {
+  "shard": "assamese/train-00008-of-00112.parquet",
+  "size_bytes": 551223029,
+  "rows": 4190,
+  "conv_rows": 754,
+  "conv_sessions": 40
+ },
+ {
+  "shard": "assamese/train-00009-of-00112.parquet",
+  "size_bytes": 542821342,
+  "rows": 4190,
+  "conv_rows": 781,
+  "conv_sessions": 42
+ },
+ {
+  "shard": "assamese/train-00005-of-00112.parquet",
+  "size_bytes": 546167278,
+  "rows": 4190,
+  "conv_rows": 589,
+  "conv_sessions": 33
+ },
+ {
+  "shard": "assamese/train-00004-of-00112.parquet",
+  "size_bytes": 544230065,
+  "rows": 4190,
+  "conv_rows": 654,
+  "conv_sessions": 35
+ }
+]

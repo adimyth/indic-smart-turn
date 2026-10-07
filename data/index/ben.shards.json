@@ -1,0 +1,44 @@
+[
+ {
+  "shard": "bengali/train-00003-of-00096.parquet",
+  "size_bytes": 413539887,
+  "rows": 3494,
+  "conv_rows": 1778,
+  "conv_sessions": 82
+ },
+ {
+  "shard": "bengali/train-00004-of-00096.parquet",
+  "size_bytes": 424216950,
+  "rows": 3494,
+  "conv_rows": 1684,
+  "conv_sessions": 80
+ },
+ {
+  "shard": "bengali/train-00002-of-00096.parquet",
+  "size_bytes": 427943765,
+  "rows": 3494,
+  "conv_rows": 1750,
+  "conv_sessions": 81
+ },
+ {
+  "shard": "bengali/train-00000-of-00096.parquet",
+  "size_bytes": 486653111,
+  "rows": 3494,
+  "conv_rows": 1321,
+  "conv_sessions": 69
+ },
+ {
+  "shard": "bengali/train-00001-of-00096.parquet",
+  "size_bytes": 448733775,
+  "rows": 3494,
+  "conv_rows": 1577,
+  "conv_sessions": 73
+ },
+ {
+  "shard": "bengali/valid-00000-of-00001.parquet",
+  "size_bytes": 386114054,
+  "rows": 4009,
+  "conv_rows": 2282,
+  "conv_sessions": 135
+ }
+]

@@ -1,0 +1,86 @@
+[
+ {
+  "shard": "malayalam/train-00001-of-00078.parquet",
+  "size_bytes": 530060340,
+  "rows": 4353,
+  "conv_rows": 1252,
+  "conv_sessions": 52
+ },
+ {
+  "shard": "malayalam/train-00003-of-00078.parquet",
+  "size_bytes": 507554156,
+  "rows": 4353,
+  "conv_rows": 1423,
+  "conv_sessions": 58
+ },
+ {
+  "shard": "malayalam/valid-00000-of-00002.parquet",
+  "size_bytes": 220915670,
+  "rows": 2262,
+  "conv_rows": 1110,
+  "conv_sessions": 45
+ },
+ {
+  "shard": "malayalam/valid-00001-of-00002.parquet",
+  "size_bytes": 193729935,
+  "rows": 2262,
+  "conv_rows": 1433,
+  "conv_sessions": 61
+ },
+ {
+  "shard": "malayalam/train-00002-of-00078.parquet",
+  "size_bytes": 530189130,
+  "rows": 4353,
+  "conv_rows": 1101,
+  "conv_sessions": 44
+ },
+ {
+  "shard": "malayalam/train-00000-of-00078.parquet",
+  "size_bytes": 515291163,
+  "rows": 4353,
+  "conv_rows": 1273,
+  "conv_sessions": 52
+ },
+ {
+  "shard": "malayalam/train-00004-of-00078.parquet",
+  "size_bytes": 522468187,
+  "rows": 4353,
+  "conv_rows": 1219,
+  "conv_sessions": 52
+ },
+ {
+  "shard": "malayalam/train-00009-of-00078.parquet",
+  "size_bytes": 521917151,
+  "rows": 4353,
+  "conv_rows": 1253,
+  "conv_sessions": 50
+ },
+ {
+  "shard": "malayalam/train-00006-of-00078.parquet",
+  "size_bytes": 561731831,
+  "rows": 4353,
+  "conv_rows": 915,
+  "conv_sessions": 37
+ },
+ {
+  "shard": "malayalam/train-00005-of-00078.parquet",
+  "size_bytes": 516413763,
+  "rows": 4353,
+  "conv_rows": 1284,
+  "conv_sessions": 54
+ },
+ {
+  "shard": "malayalam/train-00007-of-00078.parquet",
+  "size_bytes": 524964104,
+  "rows": 4353,
+  "conv_rows": 1222,
+  "conv_sessions": 47
+ },
+ {
+  "shard": "malayalam/train-00008-of-00078.parquet",
+  "size_bytes": 539520600,
+  "rows": 4353,
+  "conv_rows": 1091,
+  "conv_sessions": 46
+ }
+]

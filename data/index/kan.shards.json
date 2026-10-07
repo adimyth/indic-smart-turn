@@ -1,0 +1,86 @@
+[
+ {
+  "shard": "kannada/train-00000-of-00088.parquet",
+  "size_bytes": 462063796,
+  "rows": 3560,
+  "conv_rows": 800,
+  "conv_sessions": 36
+ },
+ {
+  "shard": "kannada/valid-00001-of-00002.parquet",
+  "size_bytes": 179052561,
+  "rows": 2063,
+  "conv_rows": 1143,
+  "conv_sessions": 48
+ },
+ {
+  "shard": "kannada/train-00003-of-00088.parquet",
+  "size_bytes": 498979160,
+  "rows": 3560,
+  "conv_rows": 632,
+  "conv_sessions": 27
+ },
+ {
+  "shard": "kannada/train-00001-of-00088.parquet",
+  "size_bytes": 392601693,
+  "rows": 3560,
+  "conv_rows": 1303,
+  "conv_sessions": 55
+ },
+ {
+  "shard": "kannada/train-00002-of-00088.parquet",
+  "size_bytes": 431433452,
+  "rows": 3560,
+  "conv_rows": 907,
+  "conv_sessions": 39
+ },
+ {
+  "shard": "kannada/valid-00000-of-00002.parquet",
+  "size_bytes": 245694334,
+  "rows": 2063,
+  "conv_rows": 743,
+  "conv_sessions": 30
+ },
+ {
+  "shard": "kannada/train-00009-of-00088.parquet",
+  "size_bytes": 439957403,
+  "rows": 3560,
+  "conv_rows": 905,
+  "conv_sessions": 36
+ },
+ {
+  "shard": "kannada/train-00008-of-00088.parquet",
+  "size_bytes": 468606226,
+  "rows": 3560,
+  "conv_rows": 863,
+  "conv_sessions": 40
+ },
+ {
+  "shard": "kannada/train-00004-of-00088.parquet",
+  "size_bytes": 422770094,
+  "rows": 3560,
+  "conv_rows": 1339,
+  "conv_sessions": 56
+ },
+ {
+  "shard": "kannada/train-00006-of-00088.parquet",
+  "size_bytes": 420310134,
+  "rows": 3560,
+  "conv_rows": 1278,
+  "conv_sessions": 52
+ },
+ {
+  "shard": "kannada/train-00005-of-00088.parquet",
+  "size_bytes": 440045943,
+  "rows": 3560,
+  "conv_rows": 1041,
+  "conv_sessions": 44
+ },
+ {
+  "shard": "kannada/train-00007-of-00088.parquet",
+  "size_bytes": 419641446,
+  "rows": 3560,
+  "conv_rows": 1217,
+  "conv_sessions": 53
+ }
+]

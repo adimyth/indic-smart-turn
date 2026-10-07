@@ -1,0 +1,86 @@
+[
+ {
+  "shard": "punjabi/train-00000-of-00097.parquet",
+  "size_bytes": 493165346,
+  "rows": 3995,
+  "conv_rows": 1315,
+  "conv_sessions": 51
+ },
+ {
+  "shard": "punjabi/train-00002-of-00097.parquet",
+  "size_bytes": 462918769,
+  "rows": 3995,
+  "conv_rows": 1393,
+  "conv_sessions": 51
+ },
+ {
+  "shard": "punjabi/train-00003-of-00097.parquet",
+  "size_bytes": 483158024,
+  "rows": 3995,
+  "conv_rows": 1421,
+  "conv_sessions": 51
+ },
+ {
+  "shard": "punjabi/valid-00000-of-00002.parquet",
+  "size_bytes": 207015519,
+  "rows": 2018,
+  "conv_rows": 1090,
+  "conv_sessions": 54
+ },
+ {
+  "shard": "punjabi/train-00001-of-00097.parquet",
+  "size_bytes": 432913743,
+  "rows": 3995,
+  "conv_rows": 1422,
+  "conv_sessions": 50
+ },
+ {
+  "shard": "punjabi/valid-00001-of-00002.parquet",
+  "size_bytes": 269235436,
+  "rows": 2018,
+  "conv_rows": 629,
+  "conv_sessions": 27
+ },
+ {
+  "shard": "punjabi/train-00005-of-00097.parquet",
+  "size_bytes": 450009208,
+  "rows": 3995,
+  "conv_rows": 1240,
+  "conv_sessions": 46
+ },
+ {
+  "shard": "punjabi/train-00007-of-00097.parquet",
+  "size_bytes": 490578718,
+  "rows": 3995,
+  "conv_rows": 1206,
+  "conv_sessions": 47
+ },
+ {
+  "shard": "punjabi/train-00009-of-00097.parquet",
+  "size_bytes": 441295268,
+  "rows": 3995,
+  "conv_rows": 1617,
+  "conv_sessions": 62
+ },
+ {
+  "shard": "punjabi/train-00004-of-00097.parquet",
+  "size_bytes": 475244412,
+  "rows": 3995,
+  "conv_rows": 1322,
+  "conv_sessions": 53
+ },
+ {
+  "shard": "punjabi/train-00008-of-00097.parquet",
+  "size_bytes": 493151109,
+  "rows": 3995,
+  "conv_rows": 1293,
+  "conv_sessions": 50
+ },
+ {
+  "shard": "punjabi/train-00006-of-00097.parquet",
+  "size_bytes": 498895578,
+  "rows": 3995,
+  "conv_rows": 1238,
+  "conv_sessions": 46
+ }
+]
