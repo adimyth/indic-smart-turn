@@ -182,3 +182,72 @@ pause-cuts judged incomplete by audio: 926/1938 = 48%
   T=C A=I (0.9) ਅੱਛਾ <unintelligible>  | ends abruptly on a trailing phrase
   T=C A=I (0.9) ਕੋਈ ਨਹੀਂ ਲਵਾ ਲੈਂਦੇ ਹਾਂ ਆਪਾਂ ਸਾਰੇ ਘਰ ਇਕੱਠੇ ਹੋ ਕੇ  | ends on conjunctive participle with continuation tone
   T=C A=I (0.9) ਨਹੀਂ ਨਹੀਂ ਇਹਨਾਂ ਕੋਲ ਤਾਂ ਮਲਟੀਗ੍ਰਾਊਂਡ ਹੈ ਜੀ ਸਾਰੇ ਤਰ੍ਹਾਂ ਦੀਆਂ ਗੇਮਾਂ ਦੀ ਹੈ  | Cut off mid-sentence with rising tone
+=== asm: 3905 segments, 1783 pause-cuts, 0 errors ===
+overall agreement: 3480/3905 = 89.1%   text complete-rate 84%  audio complete-rate 85%
+  text=complete & audio=complete 3090 | text=complete & audio=incomplete 197 | text=incomplete & audio=incomplete 390 | text=incomplete & audio=complete 228
+  dur 0-1.5s: n=781 agreement 92.8%  text-complete 93%  audio-complete 90%
+  dur 1.5-4s: n=1565 agreement 89.1%  text-complete 85%  audio-complete 86%
+  dur 4-99s: n=1559 agreement 87.2%  text-complete 79%  audio-complete 82%
+  audio-confident (>=0.8): n=3902 agreement 89.2%
+pause-cuts judged incomplete by audio: 865/1783 = 49%
+--- disagreements (text / audio, audio conf, reason) ---
+  T=C A=I (0.9) দাদা আপোনালোকৰ এইটো আ বৰা ট্ৰেভেল এজেঞ্চীটো হয়নে বাছৰ যিটো  | Ends mid-clause with an unfinished relative modifier.
+  T=C A=I (0.9) সেইটো কাৰণে  | ends on conjunction meaning 'that's why'
+  T=I A=C (0.9) <unintelligible> নহয় কথা এটা শুনকচোন ছাৰ  | Polite imperative request with falling terminal intonation.
+  T=I A=C (0.8) <unintelligible> নেজায় আটাটো দি দিলে মানে একদম ধুনীয়াকে সেই হয় যায়  | falling intonation completes the thought
+  T=I A=C (0.9) দামটো সস্তা আৰু চিনাকীও আছিলে মানে <unintelligible>  | Falling intonation and completed thought.
+  T=C A=I (0.8) তাৰপাছতে ইয়াতে বড়ো প্ৰধানকৈ এ বড়োলেণ্ডত বড়ো জনগোষ্ঠী আৰু অসমৰ অন্য  | ends abruptly on a modifier mid-thought
+  T=C A=I (0.9) এ মই এফেলে বজাৰৰ ফালেহে আহিছিলোঁ আহ মুকালমোৱাৰ ফেলে  | Trailing off with open-ended continuation intonation.
+  T=I A=C (0.9) অঁ আপুনি কৰিছে দেখোন এইটো বয়সতো খেতি অলপ  | full thought with falling pitch
+  T=C A=I (0.8) অঁ ড্ৰেছ কোড  | Hesitant continuation tone and incomplete thought
+  T=I A=C (0.9) বুজিছে কাইলৈ আহি যাৱক পাৰে যদি আপুনি  | Full thought expressed with falling final intonation
+  T=C A=I (0.8) আপেলৰ এশ পঞ্চাছ প্ৰতি কেজি  | Mid-list with rising continuation intonation
+  T=I A=C (0.9) হয় নেকি অ নাৰিকল যদি বৰা চাউলখিনি তুমি অলপ তিয়াই থ'ব লাগিব যদি ৰাতিপ  | instructions end with finite verb and falling intonation
+  T=C A=I (0.9) এইয়া কি বুলি কয় সৰু ল'ৰা ছোৱালীৰ কাপোৰবিলাক  | abrupt cutoff mid-phrase on a noun phrase
+  T=I A=C (0.9) গতিকে সেইখিনি আমি ৰাস্তা বদূলি হৈছে বুলি ভাবিছোঁ যিমান হ'ব লাগে সিমান   | turn ends with falling terminal particle
+=== ori: 3765 segments, 1602 pause-cuts, 0 errors ===
+overall agreement: 3361/3765 = 89.3%   text complete-rate 83%  audio complete-rate 85%
+  text=complete & audio=complete 2966 | text=complete & audio=incomplete 151 | text=incomplete & audio=incomplete 395 | text=incomplete & audio=complete 253
+  dur 0-1.5s: n=753 agreement 94.2%  text-complete 91%  audio-complete 89%
+  dur 1.5-4s: n=1547 agreement 89.2%  text-complete 85%  audio-complete 87%
+  dur 4-99s: n=1465 agreement 86.8%  text-complete 76%  audio-complete 82%
+  audio-confident (>=0.8): n=3764 agreement 89.3%
+pause-cuts judged incomplete by audio: 690/1602 = 43%
+--- disagreements (text / audio, audio conf, reason) ---
+  T=I A=C (0.9) ତେଣୁ ଆପଣଙ୍କ ଯେଉଁଟା ନୁଆଁ ସାର ଯେଉଁଟା ଆସି ନାହିଁକି ସେ ସାର ଟିକିଏ ପ୍ଲାନ୍ କରି  | concluding phrase with falling intonation
+  T=C A=I (0.9) ଫାଇବର୍ ଫ୍ରେମ୍ ହେବ ଆପଣଙ୍କର  | Drawn-out trailing vowel indicates floor holding
+  T=I A=C (0.9) ଯେଉଁ ଶହେଠୁ ଆରମ୍ଭ କରି ଦୁଇଶହ ଏହିଭଳି ଭିତରେ ଅଛି ଆଉ  | falling terminal pitch on closing particle
+  T=C A=I (0.9) ହଁ ତିନ ଚାରି ଦିନ ଅଛି ଯେ ଆରମଶେ ଯିମୁନ ବର୍ଷକରେ ଥରେ ହୋଇଛି <unintelligible>ତ  | ends abruptly mid-phrase on incomplete clause
+  T=I A=C (0.9) ଆଉ ତା'ହେଲେ ଠିକ୍ ଅଛି ଠିକ୍ ଅଛି ମୁଁ ଫୋନ୍ କଲେ ମୁଁ ଯିବି ଆଉ ଗାଡ଼ି ନେଇକିରି ଆଉ  | natural turn finality with terminal particle
+  T=I A=C (0.9) ଚିକେନ୍ରେ ଚିକେନ୍ରେ ଚିକେନ୍ରେ ଯେଉଁ ଯେତେକ ଗୁଣ୍ଡ ରହିଲା ସେଇ ଗୁଡା ପୂରାଇ ଦେବେ   | completed instruction with falling intonation
+  T=C A=I (0.9) ହଁ ମୁଇଁ ବି ହେମ୍ତି ଶୁନିଛେ କିନି କହୁଥିଲେ ହେମ୍ତି ସାଙ୍ଗ ମାନେ ଯେ  | ends on trailing connector ଯେ
+  T=I A=C (0.9) ସାହିତ୍ୟ ପଢ଼ଉଥିବ ତା'କୁ ଯଦି କହିବେ ମ୍ୟାଥ୍ ପଢ଼େଇବା ପାଇଁ ସେ କ'ଣ ଭଲ ପଢ଼େଇ ପା  | Completed thought with falling terminal intonation.
+  T=I A=C (0.9) ହଁ ନିଶ୍ଚିତ ନିଶ୍ଚିତ ହଁ ପିଲା ହଁ  | Speaker gives final acknowledgement with falling pitch.
+  T=C A=I (0.9) ହଉ ଆମେ ଆସୁଛୁ  | abrupt cutoff mid-word
+  T=I A=C (0.9) ହଁ ଯିବା ବସ୍ରେ ଗୋଟେ ବସ୍ ରିଜର୍ଭ କରିଦେବା ତମ ଫ୍ୟାମିଲି ଆମ ଫ୍ୟାମିଲି ଯିବା ସବୁ  | turn ends naturally on discourse marker au
+  T=I A=C (0.9) ସାର୍ ମୋ ଜଣେ ପେସେଣ୍ଟ୍ ଆସିବେ ମୁଁ ବି ଜଣେ ପେସେଣ୍ଟ  | Statement is complete with falling final intonation.
+  T=C A=I (0.8) ବାହାଘର ଶାଢ଼ୀ ବାହାଘର ସମ୍ବଲପୁରୀ ପାଟ ଯେଉଁଟା ଆପଣ କହୁଛନ୍ତି  | ends on dependent relative clause
+  T=I A=C (0.9) ଓ ଆର୍ ଏସ୍ ଦୁଇଟା ଦେଇ  | speaker completes the request with a final tone
+=== ben: 4363 segments, 2147 pause-cuts, 1 errors ===
+overall agreement: 4016/4363 = 92.0%   text complete-rate 87%  audio complete-rate 86%
+  text=complete & audio=complete 3585 | text=complete & audio=incomplete 196 | text=incomplete & audio=incomplete 431 | text=incomplete & audio=complete 151
+  dur 0-1.5s: n=872 agreement 92.1%  text-complete 90%  audio-complete 87%
+  dur 1.5-4s: n=1376 agreement 92.8%  text-complete 89%  audio-complete 87%
+  dur 4-99s: n=2115 agreement 91.5%  text-complete 84%  audio-complete 84%
+  audio-confident (>=0.8): n=4359 agreement 92.1%
+pause-cuts judged incomplete by audio: 1005/2147 = 47%
+--- disagreements (text / audio, audio conf, reason) ---
+  T=I A=C (0.9) রাস্তা খরচ বলতে ড্রাইভারের খরচ রাস্তা বলতে খাওয়া দাওয়াটা বাদ দিয়ে আ  | Speaker finishes the clarification with definitive intonation.
+  T=C A=I (0.9) আচ্ছা বলছি স্যার আপনাদের এখানে মানে জুতো কিনতাম আর কি কীরকম কী <uninte  | ends on trailing filler 'আর'
+  T=C A=I (0.9) বলছি  | introductory conversational filler with continuation tone
+  T=I A=C (0.9) আরে আপনার তো চেনা পরিচিত লোক  | Full conversational remark with falling final intonation.
+  T=I A=C (0.9) সেই <unintelligible> যদি চুজ করতে পারেন <unintelligible> পারে  | Finite verb ending with falling pitch.
+  T=I A=C (0.9) মাইক টাইক করব <unintelligible> ফুল টুল তারপরে আরও শিক্ষক <unintelligib  | Grammatically complete statement ending with finite verb.
+  T=I A=C (0.9) হ্যাঁ আমাদের ফুচকা বা আপনি যেরকম যতটা চাইবেন <unintelligible> আমি বলছি  | falling intonation on final finite verb
+  T=C A=I (0.9) হ্যাঁ ম্যাডাম আমি তো ওকে তো প্রতিদিন নিয়মিত হচ্ছে ঘুরতে নিয়ে যাই আফট  | abrupt cutoff mid-speech at the end
+  T=C A=I (0.9) আচ্ছা ঠিক আছে আপনি আসবেন না এলে <unintelligible> সেগুলো দেখে বলা হবে ত  | ends on a genitive modifier mid-sentence
+  T=C A=I (0.9) এখন তুমি যদিন শিখতে পারো তুমি যদি বল শরীর আমার ঠিক হয়ে গেছে আসতে না প  | Cut off mid-sentence on 'depend'.
+  T=I A=C (0.9) ঠিক আছে আর আর স্যার ওই বলছিলাম যে আর কী <unintelligible> স্পিকার কেমন   | Full question asked with falling completion pitch.
+  T=I A=C (0.9) স্যার বলছিলাম যে আমাদের গ্রামে একটা প্রাইমারি স্কুলে শিক্ষা ব্যবস্থা খ  | finite verb with falling pitch
+  T=C A=I (0.9) ও এবারে ভিভোর এমনি আর কোনো কিছু আসবে না <unintelligible>  | ends abruptly on a connective phrase
+  T=I A=C (0.9) আপনি কি ভাবছেন এটা আমার রায় এটা  | declarative statement with falling final intonation
