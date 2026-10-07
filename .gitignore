@@ -1,0 +1,15 @@
+.env
+.venv/
+.pod_ssh
+data/hf_cache/
+data/built/
+data/preview/
+data/*.log
+models/
+output/
+references/
+__pycache__/
+data/private/
+data/spotcheck/
+data/kan_shard.txt
+*.bak

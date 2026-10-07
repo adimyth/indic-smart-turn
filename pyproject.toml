@@ -1,0 +1,28 @@
+[project]
+name = "indic-turn"
+version = "0.1.0"
+description = "Indic + English fine-tune of Pipecat Smart Turn v3 (whisper-base)"
+requires-python = ">=3.11"
+dependencies = [
+    "huggingface_hub>=0.30",
+    "pyarrow>=17",
+    "numpy",
+    "soundfile",
+    "openai>=1.60",
+    "tqdm",
+    "python-dotenv",
+    "datasets>=4.4.1",
+    "librosa>=0.11.0",
+    "onnxruntime>=1.30.0",
+    "transformers>=4.48.2",
+    "scikit-learn>=1.9.1",
+]
+
+[project.optional-dependencies]
+train = [
+    "torch", "torchaudio", "torchcodec", "transformers[torch]==4.48.2", "datasets==4.4.1",
+    "scikit-learn", "librosa", "onnx", "onnxruntime", "onnxscript", "wandb",
+]
+
+[tool.setuptools]
+packages = ["indic_turn"]
