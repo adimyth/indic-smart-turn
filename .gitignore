@@ -13,3 +13,4 @@ data/private/
 data/spotcheck/
 data/kan_shard.txt
 *.bak
+.claude/
