@@ -10,14 +10,17 @@ Extra negatives: a chunk cut at an internal pause ("pausecut"), which is exactly
 the situation where a VAD would fire mid-turn in production.
 """
 from __future__ import annotations
-import argparse, hashlib, io, json, random
+import argparse, hashlib, io, json, os, random
 from collections import defaultdict
-import numpy as np, pyarrow.parquet as pq, soundfile as sf
+from pathlib import Path
+import numpy as np, pyarrow as pa, pyarrow.parquet as pq, soundfile as sf
 from huggingface_hub import hf_hub_download
 from .common import DATA, HF_DATASET, SR, hf_token
 
 WINDOW = 8 * SR
 TRAIL = int(0.2 * SR)
+AUDIO_VERDICTS = {"complete": True, "incomplete": False}
+AUDIO_COLUMNS = ("text_label", "audio_conf", "audio_reason", "ambiguous")
 
 def split_of(speaker_id: str, dev=0.10, test=0.10) -> str:
     h = int(hashlib.sha1(speaker_id.encode()).hexdigest(), 16) % 10000 / 10000
@@ -196,14 +199,164 @@ def save(samples, lang):
     print(f"[{lang}] saved {n} samples to {path} ({path.stat().st_size/1e6:.0f} MB): {pos} complete / {n-pos} incomplete "
           f"({100*pos/n:.0f}% positive); splits {dict(by_split)}", flush=True)
 
+def audio_key(session: str, chunk: int, dataset: str, wav: bytes) -> str:
+    return f"{session}|{chunk}|{dataset}|{hashlib.md5(wav).hexdigest()[:10]}"
+
+def load_audio_labels(path: Path):
+    """Load one Gemini result per audio key, preferring a successful retry over an earlier error."""
+    labels = {}
+    duplicate_keys = 0
+    for line in path.open():
+        row = json.loads(line)
+        key = row.get("key")
+        if not key:
+            continue
+        old = labels.get(key)
+        if old is not None:
+            duplicate_keys += 1
+        if old is None or row.get("verdict") in AUDIO_VERDICTS or old.get("verdict") not in AUDIO_VERDICTS:
+            labels[key] = row
+    if duplicate_keys:
+        print(f"[{path.stem.removesuffix('.audio')}] {duplicate_keys} duplicate audio-label keys; preferred successful retries", flush=True)
+    return labels
+
+def audio_schema(source_schema):
+    fields = []
+    inserted = False
+    additions = [
+        ("text_label", pa.bool_()),
+        ("audio_conf", pa.float32()),
+        ("audio_reason", pa.string()),
+        ("ambiguous", pa.bool_()),
+    ]
+    for field in source_schema:
+        if field.name in AUDIO_COLUMNS:
+            continue
+        fields.append(field)
+        if field.name == "endpoint_bool":
+            fields.extend(pa.field(name, type_) for name, type_ in additions)
+            inserted = True
+    if not inserted:
+        fields.extend(pa.field(name, type_) for name, type_ in additions)
+    return pa.schema(fields, metadata=source_schema.metadata)
+
+def _new_audio_stats():
+    return {"segments": 0, "pausecuts": 0, "pausecuts_kept": 0, "pausecuts_dropped": 0, "errored": 0,
+            "missing": 0, "invalid": 0, "final": 0, "positive": 0, "agreements": 0, "compared": 0,
+            "splits": defaultdict(int)}
+
+def print_audio_summary(lang: str, stats):
+    agreement = "n/a" if not stats["compared"] else f"{stats['agreements']}/{stats['compared']} = {100 * stats['agreements'] / stats['compared']:.1f}%"
+    positive = "n/a" if not stats["final"] else f"{100 * stats['positive'] / stats['final']:.1f}%"
+    print(
+        f"[{lang}] segments={stats['segments']}; pause-cuts kept={stats['pausecuts_kept']} dropped={stats['pausecuts_dropped']} "
+        f"(seen={stats['pausecuts']}); errored={stats['errored']}; final={stats['final']}; positive={positive}; "
+        f"splits={dict(sorted(stats['splits'].items()))}; text-vs-audio agreement={agreement}",
+        flush=True,
+    )
+
+def apply_audio_labels(lang: str, batch_size: int = 250):
+    """Atomically replace one built parquet with Gemini-primary labels without rebuilding audio samples."""
+    path = DATA / "built" / f"{lang}.parquet"
+    labels_path = DATA / "labels" / f"{lang}.audio.jsonl"
+    if not path.exists():
+        print(f"[{lang}] skipping: no built parquet at {path}", flush=True)
+        return None
+    if not labels_path.exists():
+        print(f"[{lang}] skipping: no audio labels at {labels_path}", flush=True)
+        return None
+    labels = load_audio_labels(labels_path)
+    source = pq.ParquetFile(path)
+    if len(labels) < source.metadata.num_rows:
+        print(f"[{lang}] skipping: {len(labels)} audio-label keys for {source.metadata.num_rows} built rows (labelling is incomplete)", flush=True)
+        return None
+    schema = audio_schema(source.schema_arrow)
+    temp_path = path.with_name(f".{path.stem}.apply-audio-labels.tmp.parquet")
+    if temp_path.exists():
+        temp_path.unlink()
+    stats = _new_audio_stats()
+    try:
+        with pq.ParquetWriter(temp_path, schema, compression="snappy") as writer:
+            for batch in source.iter_batches(batch_size=batch_size):
+                data = batch.to_pydict()
+                base_columns = [name for name in schema.names if name not in AUDIO_COLUMNS and name != "endpoint_bool"]
+                out = {name: [] for name in schema.names}
+                has_text_label = "text_label" in data
+                for i in range(batch.num_rows):
+                    dataset = data["dataset"][i]
+                    pausecut = dataset.endswith("_pausecut")
+                    wav = data["audio"][i]["bytes"]
+                    key = audio_key(data["session"][i], data["chunk"][i], dataset, wav)
+                    label = labels.get(key)
+                    if label is None:
+                        stats["missing"] += 1
+                        continue
+                    verdict = label.get("verdict")
+                    if verdict == "error":
+                        stats["errored"] += 1
+                        continue
+                    if verdict not in AUDIO_VERDICTS:
+                        stats["invalid"] += 1
+                        continue
+                    audio_label = AUDIO_VERDICTS[verdict]
+                    confidence = float(label.get("confidence", 0.0))
+                    if pausecut:
+                        stats["pausecuts"] += 1
+                        if audio_label or confidence < 0.7:
+                            stats["pausecuts_dropped"] += 1
+                            continue
+                        text_label, ambiguous = None, False
+                        stats["pausecuts_kept"] += 1
+                    else:
+                        stats["segments"] += 1
+                        text_label = data["text_label"][i] if has_text_label else data["endpoint_bool"][i]
+                        text_label = bool(text_label)
+                        ambiguous = audio_label != text_label
+                        stats["compared"] += 1
+                        stats["agreements"] += not ambiguous
+                    for name in base_columns:
+                        out[name].append(data[name][i])
+                    split = data["split"][i]
+                    if not pausecut and ambiguous and split in ("test", "test_ambiguous"):
+                        out["split"][-1] = "test_ambiguous"
+                    out["endpoint_bool"].append(audio_label)
+                    out["text_label"].append(text_label)
+                    out["audio_conf"].append(confidence)
+                    out["audio_reason"].append(str(label.get("reason", "")))
+                    out["ambiguous"].append(ambiguous)
+                    stats["final"] += 1
+                    stats["positive"] += audio_label
+                    stats["splits"][out["split"][-1]] += 1
+                if out["audio"]:
+                    writer.write_table(pa.Table.from_pydict(out, schema=schema), row_group_size=batch_size)
+        if stats["missing"] or stats["invalid"]:
+            raise RuntimeError(f"[{lang}] refusing to replace {path}: {stats['missing']} missing and {stats['invalid']} invalid audio labels")
+        os.replace(temp_path, path)
+    except Exception:
+        if temp_path.exists():
+            temp_path.unlink()
+        raise
+    print_audio_summary(lang, stats)
+    return stats
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--langs", nargs="+", required=True)
+    ap.add_argument("--langs", nargs="+", help="languages to build, or languages whose audio labels should be applied")
+    ap.add_argument("--apply-audio-labels", action="store_true", help="rewrite existing built parquets with Gemini audio verdicts; never rebuilds shards or audio")
     ap.add_argument("--pausecut-frac", type=float, default=1.0, help="prob. of adding a pause-cut candidate per chunk >= 2 s (Gemini audio labels decide if it is kept)")
     ap.add_argument("--short-cap", type=float, default=0.2, help="max share of labelled chunks shorter than 1.5 s (0 = no cap)")
     ap.add_argument("--max-rows", type=int, default=0)
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
+    if a.apply_audio_labels:
+        langs = a.langs or [p.stem for p in sorted((DATA / "built").glob("*.parquet")) if (DATA / "labels" / f"{p.stem}.audio.jsonl").exists()]
+        if not langs:
+            ap.error("--apply-audio-labels found no built parquets with audio labels")
+        for lang in langs:
+            apply_audio_labels(lang)
+        return
+    if not a.langs:
+        ap.error("--langs is required unless --apply-audio-labels is used")
     for lang in a.langs:
         samples = build_language(lang, random.Random(a.seed), a.pausecut_frac, a.max_rows, a.short_cap)
         save(samples, lang)
