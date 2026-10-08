@@ -315,14 +315,35 @@ Source: `data/private/additional-data.csv`, 1,618 roleplay sessions (`language, 
 7. Clip = last 8 s of trainee-only audio (agent regions zeroed) ending 0.2 s after the pause, same as `build.py`. Write `data/private/<lang>.parquet` with the public schema plus `call_id` (salted hash, path not stored), `pause_s`, `gap_user`, `gap_agent`, `rule_label`. Split 70/30 by `call_id` into `train` and `test`.
 8. Print per language: sessions used/quarantined, boundaries, complete/incomplete/dropped, agent-latency distribution, pause-length distribution. No file names, no transcripts (no STT is run on this data).
 
-### 9.2 Gemini second opinion (test split, audio only, paid tier)
+### 9.2 Gemini second opinion and the four-category test set
 
-Why: the rule inherits the current agent's endpointing. A `complete` exists only because the agent chose to speak; an `incomplete` with a long resume gap may be a trainee who gave up waiting. Gemini hears the clip and judges it independently of what the agent did.
+**What the labels showed** (Hindi, English, Bengali, Gujarati, full sets): the recording rule and Gemini's audio verdict agree on only 63 to 67% of clips, and the disagreement has a clear structure, measured on `data/private/labels/<lang>.audio.jsonl` joined to the parquet:
 
-1. Send to `gemini-3.7-flash` (via `indic_turn/label_audio.py`, `--parquet data/private/<lang>.parquet --split test`, no transcript) **every test-split clip**: about 4,500 clips, about $3, about 40 min. Audio only, 8 s, trainee voice only, hashed ids. Nothing from the train split leaves the machine except the band in step 2.
-2. Also send train-split `incomplete` clips with `gap_user` between 0.8 and 2.0 s (the band where "kept going because nobody answered" hides), so the optional adaptation in 9.4 does not learn from them.
-3. **Final test label policy:** rule and Gemini agree → `endpoint_bool` = that label, split `test`; disagree → split `test_ambiguous`, reported separately. Train split keeps the rule label except where step 2 flips it to ambiguous (then dropped from train).
-4. Report per language: rule-vs-Gemini agreement overall, on `complete`, on `incomplete`, and on the 0.8–2.0 s band; final clean test counts per class. Agreement below 85% on either class in any language stops the pipeline for a listening review before the numbers are used.
+- Rule = incomplete, Gemini = complete (about 35% of mid-monologue pauses): the trainee paused at the end of a grammatically complete sentence with falling pitch and then continued, usually within 0.3 s. From the audio alone the turn sounds finished; from the recording it was not. The base model sides with Gemini on 81% of these.
+- Rule = complete, Gemini = incomplete: strongly tied to how fast the agent answered. When the agent replied within 2 s, Gemini calls only 40 to 48% of those pauses complete ("abrupt cut off mid-sentence"); when it took 3.5 to 5 s, 82 to 89%. The current agent's fast replies are often interruptions.
+- Pause length is the strongest single signal: pauses of 1 s or more are 71 to 76% complete by both labelers; pauses under 1 s are 7 to 10% complete by the rule but 31 to 37% by Gemini.
+
+"Agree-only" would keep two thirds of the clips and hide exactly the cases that matter, so the test set is split into four categories instead of filtered:
+
+| Category | Definition | What it measures | Metric |
+|---|---|---|---|
+| A, clear turn end | rule complete and Gemini complete | the agent should answer now | recall (answer promptly) |
+| B, unfinished pause | rule incomplete and Gemini incomplete | the agent must stay quiet | specificity (do not interrupt) |
+| C, sentence-final pause inside a monologue | rule incomplete and Gemini complete | the hard case: sounds done, trainee continues | interrupt rate at 0.5, and at higher thresholds |
+| D, agent interruption | rule complete and Gemini incomplete | the current agent spoke over an unfinished sentence | reported as a finding about the agent; excluded from model scoring |
+
+Labelling: all rows, train and test, all ten languages (approved; about $35). Train rows keep category A as complete and B as incomplete; C and D are dropped from training.
+
+Report per language (`reports/private_baseline.md`), for Smart Turn v3.2 int8, base fp32, base int8 dynamic, tiny int8:
+
+1. Category sizes and share of the test clips.
+2. A recall, B specificity, C interrupt rate, each with 95% CIs, at threshold 0.5.
+3. The same metrics by pause length (0.2–0.5 s, 0.5–1 s, 1 s and over), since production can choose not to consult the model on the shortest pauses.
+4. A policy sweep: for thresholds 0.5, 0.7, 0.9 and minimum pause 0.2, 0.5, 1.0 s, the resulting C interrupt rate and A recall, so the deployment can pick its own trade-off between interrupting a pitch and answering late.
+5. The agent-interruption finding: share of the agent's replies that fall in category D, by agent latency bin.
+6. Public-test numbers alongside, for reference.
+
+Odia is reported as indicative only (2 sessions); Kannada as low-count. The quarantine rate per language is stated as a limitation.
 
 ### 9.3 Human spot-check
 
