@@ -59,6 +59,8 @@ Transcript: I was going to the market
 }
 ```
 
+Labelling cost about $29.
+
 ### Text label
 
 `gpt-6-luna` (`gpt-5.4` for Hindi and Telugu) gets one speaker's whole session in a single request. Every pause-split segment is one line, `[chunk] (duration) text`. We ask whether the speaker had finished at the end of each line. The model returns `1` (complete) or `0` (incomplete) and a confidence for every line. It uses the later lines to decide the earlier ones.
@@ -77,6 +79,8 @@ Line 1 is incomplete because line 2 finishes the sentence. Line 2 is complete. L
 
 On a 600-clip validation run the text labels agreed with the audio label 89–90% of the time with matching complete rates; the disagreements are mostly prosody the text cannot see. Test clips where the two disagree are reported separately as "ambiguous".
 
+Labelling cost about $6.50.
+
 ### Pause-cuts
 
 Extra incomplete examples come from cutting a segment at an internal pause ("pause-cut"), the spot where a VAD fires mid-turn in production. The full segment below pauses after "market". We send Gemini only the audio up to that pause, with no transcript.
@@ -89,6 +93,42 @@ Transcript:   none
 
 Only about half of such cuts sound incomplete when heard, so a pause-cut is kept only when the audio label says incomplete. Segments shorter than 1.5 s, almost all one-word acknowledgements, are capped at 20% of each language so they do not crowd out the hard mid-length cases.
 
+## Dataset
+
+Eleven languages, 50,421 samples. Available on Hugging Face: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
+
+Ambiguous clips were taken out of test because the text label and the audio label disagree.
+
+| Language | Samples | Train | Dev | Test | Ambiguous |
+|---|---:|---:|---:|---:|---:|
+| hin | 4,864 | 3,837 | 527 | 460 | 40 |
+| tel | 5,167 | 3,776 | 598 | 725 | 68 |
+| kan | 4,005 | 3,224 | 371 | 385 | 25 |
+| mar | 4,747 | 3,638 | 521 | 537 | 51 |
+| tam | 2,616 | 2,071 | 226 | 300 | 19 |
+| mal | 4,714 | 3,845 | 376 | 472 | 21 |
+| guj | 4,907 | 4,007 | 368 | 498 | 34 |
+| pan | 4,808 | 3,843 | 366 | 556 | 43 |
+| asm | 4,770 | 3,690 | 388 | 639 | 53 |
+| ori | 4,455 | 3,854 | 248 | 331 | 22 |
+| ben | 5,368 | 4,140 | 717 | 482 | 29 |
+
+Complete is the share of clips labelled as a finished turn.
+
+| Language | Complete | Text vs audio agreement |
+|---|---:|---:|
+| hin | 70.3% | 90.9% |
+| tel | 70.8% | 90.4% |
+| kan | 74.6% | 90.7% |
+| mar | 67.5% | 89.5% |
+| tam | 75.2% | 93.3% |
+| mal | 70.6% | 93.3% |
+| guj | 67.7% | 92.0% |
+| pan | 67.5% | 91.2% |
+| asm | 69.6% | 89.1% |
+| ori | 72.3% | 89.3% |
+| ben | 69.6% | 92.0% |
+
 ## Technique
 
 We keep the upstream Smart Turn v3 architecture and recipe: a Whisper encoder with the decoder discarded, 8 s of 16 kHz audio (the last 8 s, zero-padded at the front), attention pooling, a small MLP classifier, and BCE loss with per-batch positive weighting. We train from Whisper weights with upstream's `train.py` (vendored and patched in `train/`), export to ONNX fp32, and quantise to int8 with static calibration.
@@ -100,6 +140,67 @@ We train two sizes on identical data and compare them:
 | whisper-tiny | 8M | ~8 MB | ~80 ms |
 | whisper-base | 20M | ~21 MB | ~140 ms |
 
+
+## How the model was trained
+
+### Machine
+
+One RunPod on-demand pod, created with `scripts/pod_create.py` and provisioned by `scripts/pod_setup.sh`:
+
+| | |
+|---|---|
+| GPU | NVIDIA RTX A6000, 48 GB (driver 595.91) |
+| CPU | AMD EPYC 7543, 96 vCPU |
+| RAM | 503 GB |
+| Storage | 140 GB network volume at `/workspace` |
+| Image | `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404` |
+| Price | $0.53 per hour |
+| Software | torch 2.8.0+cu128, transformers 4.48.2, datasets 4.4.1, torchcodec 0.7.0, onnxruntime 1.30.0 |
+
+The GPU is not the bottleneck: training is bound by audio decoding on the CPU, which is why the pod with 96 vCPUs was chosen over cheaper cards with fewer cores.
+
+### Data mix per epoch
+
+| Source | Samples | Notes |
+|---|---|---|
+| IndicVoices, 11 languages, train split | 51,917 x 2 | audio-labelled clips, oversampled twice |
+| TamilEOT train | included in the row above | real Tamil calls, human-validated |
+| Pipecat v3.2 English | 40,000 | capped random sample |
+| Pipecat v3.2 Hindi, Marathi, Bengali | 26,427 | all rows |
+| **Total per epoch** | **166,939** | |
+
+In-training evaluation uses 10,031 samples: the Indic dev splits, the TamilEOT dev split and 3,000 rows of the v3.2 test set. The held-out Indic test splits are never seen during training.
+
+### Recipe
+
+`train/train.py` is the upstream Pipecat trainer with a different data loader. Both models share the recipe:
+
+| | |
+|---|---|
+| Encoder | `openai/whisper-base` (20M params) and `openai/whisper-tiny` (8M), decoder discarded, attention pooling + MLP head as upstream |
+| Input | last 8 s of 16 kHz audio as 80-bin log-mel, 800 frames |
+| Loss | BCE with per-batch positive weighting |
+| Optimiser | AdamW, lr 5e-5, weight decay 0.01, cosine schedule, warmup 20% |
+| Batch | 128, bf16, 4 epochs, 5,216 steps |
+| Checkpoint | best in-training eval F1 |
+| Wall time | base 18.7 min, tiny 24.0 min (594 and 460 samples per second) |
+
+### Export and quantisation
+
+The fp32 ONNX is exported with the legacy TorchScript exporter at opset 18 with constant folding on; without folding the weights stay as constant nodes and the quantiser only quantises activations, which left a first int8 build at fp32 size. Static int8 quantisation uses onnxruntime `quantize_static` in QDQ format, per-channel, MinMax calibration on 1,024 stratified training samples (entropy calibration ran out of memory in the container). Sizes: base 81 MB fp32 / 21 MB int8, tiny 32 MB fp32 / 8.7 MB int8. `scripts/reexport.py` re-exports and re-quantises a saved checkpoint without retraining.
+
+### Reproducing
+
+```bash
+uv run python scripts/pod_create.py
+scripts/pod_sync.sh && scripts/pod_ssh.sh "cd /workspace/indic-turn && bash scripts/pod_setup.sh"
+scripts/pod_ssh.sh "cd /workspace/indic-turn && BASE_MODEL=openai/whisper-base nohup bash scripts/pod_pipeline.sh indic-base > logs/pipeline_indic-base.log 2>&1 &"
+scripts/pod_ssh.sh "cd /workspace/indic-turn && BASE_MODEL=openai/whisper-tiny nohup bash scripts/pod_pipeline.sh indic-tiny > logs/pipeline_indic-tiny.log 2>&1 &"
+scripts/pod_ssh.sh "cd /workspace/indic-turn && nohup bash scripts/pod_eval_all.sh > logs/eval_all.log 2>&1 &"
+scripts/pod_pull.sh
+```
+
+Compute cost for both runs, export, quantisation and evaluation is about $2 at the price above.
 
 ## Verification
 
