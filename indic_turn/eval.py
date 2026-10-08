@@ -11,6 +11,7 @@ import argparse
 import glob
 import io
 import json
+import os
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -84,14 +85,19 @@ def load_rows(paths, split, limit=0):
     return rows
 
 class Model:
-    def __init__(self, name, path, threads=1):
+    def __init__(self, name, path, threads=None):
+        threads = threads or int(os.environ.get("EVAL_THREADS", "16"))
         so = ort.SessionOptions(); so.intra_op_num_threads = threads; so.inter_op_num_threads = 1
-        self.name, self.sess = name, ort.InferenceSession(path, so, providers=["CPUExecutionProvider"])
+        self.name, self.path = name, path
+        self.sess = ort.InferenceSession(path, so, providers=["CPUExecutionProvider"])
         inp = self.sess.get_inputs()[0]
         self.input_name, self.shape = inp.name, inp.shape
         self.raw_audio = not (len(self.shape) == 3 and self.shape[1] == 80)
-    def run(self, wavs):
-        x = np.stack([last8(w) for w in wavs]).astype(np.float32) if self.raw_audio else features(wavs)
+    def run(self, wavs, feats=None):
+        if self.raw_audio:
+            x = np.stack([last8(w) for w in wavs]).astype(np.float32)
+        else:
+            x = feats if feats is not None else features(wavs)
         out = self.sess.run(None, {self.input_name: x})[0]
         out = np.asarray(out, dtype=np.float64).reshape(len(wavs), -1)
         p = out[:, -1] if out.shape[1] > 1 else out[:, 0]
@@ -99,10 +105,12 @@ class Model:
             p = 1 / (1 + np.exp(-p))
         return p
     def latency_ms(self, wav, n=30):
-        for _ in range(5): self.run([wav])
+        """Single-sample latency on a separate 1-thread session (the production setting)."""
+        m1 = Model(self.name, self.path, threads=1)
+        for _ in range(5): m1.run([wav])
         ts = []
         for _ in range(n):
-            t = time.perf_counter(); self.run([wav]); ts.append((time.perf_counter() - t) * 1000)
+            t = time.perf_counter(); m1.run([wav]); ts.append((time.perf_counter() - t) * 1000)
         return float(np.median(ts))
 
 def metrics(p, y, threshold=0.5):
@@ -176,12 +184,16 @@ def threshold_sweep(prob, labels):
     }
 
 def evaluate(models, rows, bs=64):
-    res = {}
-    for m in models:
-        probs = []
-        for i in range(0, len(rows), bs):
-            probs.extend(m.run([r["wav"] for r in rows[i:i + bs]]).tolist())
-        res[m.name] = probs
+    """Log-mel features are computed once per batch and shared across all mel-input models."""
+    res = {m.name: [] for m in models}
+    t0 = time.time()
+    for i in range(0, len(rows), bs):
+        wavs = [r["wav"] for r in rows[i:i + bs]]
+        feats = features(wavs) if any(not m.raw_audio for m in models) else None
+        for m in models:
+            res[m.name].extend(m.run(wavs, feats).tolist())
+        if (i // bs) % 50 == 0:
+            print(f"  {i + len(wavs)}/{len(rows)} rows, {time.time() - t0:.0f}s", flush=True)
     return res
 
 def _format_ci(value, interval, percent=False):
