@@ -298,7 +298,7 @@ What was checked, and the outcome:
 
 | Checks | Result |
 |---|---|
-| Evaluation code reproduces published numbers | Smart Turn v3.2 on TamilEOT: 70.4% / AUC 0.743 (paper 70.3 / 0.751); public Tamil base model: 86.1% / 0.922 (paper 86.13) |
+| Evaluation code reproduces published numbers | Smart Turn v3.2 on TamilEOT: 70.4% / AUC 0.743 in the final run on the pod (`reports/eval_all_test.md`; an earlier run on the laptop gave 70.2 / 0.749, the spread between two onnxruntime builds), against the paper's 70.3 / 0.751; public Tamil base model: 86.1% / 0.922 (paper 86.13) |
 | At least 84% accuracy on every Indian language, base fp32 | 10 of 11; Assamese 83.6 with a 95% interval of 80.9 to 86.5 |
 | AUC at least 0.90 on every Indian language, base fp32 | 8 of 11; Assamese 0.892, Gujarati 0.895, Malayalam 0.859 |
 | English within 2 points of Smart Turn v3.2 | pass, base fp32 is 2.0 points above |
