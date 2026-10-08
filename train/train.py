@@ -240,7 +240,7 @@ def export_to_onnx_fp32(model, output_path, config):
             f=output_path,
             export_params=True,
             opset_version=config["onnx_opset_version"],
-            do_constant_folding=False,
+            do_constant_folding=True,  # legacy exporter: fold Transpose(weight) into initializers so quantize_static can quantize them
             input_names=['input_features'],
             output_names=['logits'],
             dynamic_axes=dynamic_axes,
