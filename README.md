@@ -239,22 +239,25 @@ The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it sc
 
 ### Reading the numbers
 
-Accuracy is measured at a fixed threshold of 0.5, so it depends on how a model's probabilities are calibrated as well as on how well it separates the two classes. ROC-AUC measures only the separation. Two things in the tables follow from that.
+The model gives each pause a probability that the turn is complete. We call it "complete" when that probability is above 0.5. Accuracy counts how many of those calls were right. ROC-AUC asks a different question: if you hand the model one complete pause and one incomplete pause, how often does it give the complete one the higher probability? AUC ignores where the 0.5 line sits; accuracy depends on it.
 
-**Smart Turn v3.2 int8 scores higher than Smart Turn v3.2 fp32 in 11 of 12 languages.** The two files separate the classes equally well (AUC within 0.03 everywhere), but they are calibrated differently: the fp32 file leans toward "incomplete", the int8 file toward "complete". The test sets are 57 to 81% complete, so the int8 file's lean is rewarded at the 0.5 threshold.
+**Why Smart Turn v3.2 int8 scores higher than Smart Turn v3.2 fp32 on accuracy in 11 of 12 languages.** The two files are the same model at two precisions, and on AUC they are within 0.03 of each other everywhere, so they tell the two kinds of pause apart equally well. What differs is where their probabilities sit. Quantisation pushed the int8 file's probabilities up, so it says "complete" more readily; the fp32 file says "incomplete" more readily. In these test sets 57 to 81% of pauses are complete, so a model that says "complete" more often gets more calls right at the 0.5 line. The int8 file is not a better model; its probabilities just happen to sit on the better side of the line for this data. Shift the line, and the ordering can flip.
 
-| Language | int8 acc | fp32 acc | int8 AUC | fp32 AUC | fp32 recall on complete | int8 recall on complete |
+The table shows this on six languages: the AUC columns are close, while the fp32 file catches far fewer complete pauses at 0.5.
+
+| Language | int8 accuracy | fp32 accuracy | int8 AUC | fp32 AUC | complete pauses caught at 0.5, fp32 | same, int8 |
 |---|---:|---:|---:|---:|---:|---:|
-| Kannada | 77.7 | 56.6 | 0.770 | 0.795 | 50.0 | 81.9 |
-| Malayalam | 66.9 | 49.6 | 0.657 | 0.667 | 39.1 | 74.7 |
-| Telugu | 73.4 | 58.1 | 0.750 | 0.773 | 46.5 | 79.6 |
-| Gujarati | 73.5 | 58.4 | 0.765 | 0.759 | 49.9 | 78.6 |
-| Tamil | 70.5 | 58.6 | 0.744 | 0.744 | 46.1 | 76.0 |
-| English | 92.9 | 94.7 | 0.978 | 0.986 | 95.3 | 93.6 |
+| Kannada | 77.7 | 56.6 | 0.770 | 0.795 | 50.0% | 81.9% |
+| Malayalam | 66.9 | 49.6 | 0.657 | 0.667 | 39.1% | 74.7% |
+| Telugu | 73.4 | 58.1 | 0.750 | 0.773 | 46.5% | 79.6% |
+| Gujarati | 73.5 | 58.4 | 0.765 | 0.759 | 49.9% | 78.6% |
+| Tamil | 70.5 | 58.6 | 0.744 | 0.744 | 46.1% | 76.0% |
+| English | 92.9 | 94.7 | 0.978 | 0.986 | 95.3% | 93.6% |
 
-This is why each chart row also prints ROC-AUC, and why the fp32 groups show larger accuracy gaps than the int8 groups: our fp32 models are compared with a file whose threshold is poorly matched to this data, while its ranking ability is unchanged.
+Two consequences for reading the charts:
 
-**Within our own models, a few lower-precision or smaller variants post a higher accuracy; all are inside the confidence intervals.** Tiny int8 is above tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5); base int8 is above base fp32 on Odia (+0.6). The 95% intervals on those languages are about ±3 points, and the AUC differences are 0.011 or less. On AUC, base is above tiny in every language and precision, and fp32 is above or equal to int8 in every language for base. Treat accuracy differences below about 2 points on the smaller languages (331 to 725 test clips) as ties.
+- The fp32 groups show bigger accuracy gaps than the int8 groups partly because the v3.2 fp32 file's 0.5 line is badly placed for this data, not only because our fp32 models are stronger. The AUC printed at the end of each row is the fairer comparison.
+- A few of our own lower-precision or smaller variants post a slightly higher accuracy than their bigger sibling: tiny int8 over tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5), and base int8 over base fp32 on Odia (+0.6). These are the same effect at a much smaller scale, and all of them are inside the ±3 point confidence intervals of those test sets. On AUC, base beats tiny in every language, and fp32 is equal to or above int8 for base in every language. Treat accuracy gaps under about 2 points on the smaller languages (331 to 725 test clips) as ties.
 
 ### Latency, batch 1, single thread
 
