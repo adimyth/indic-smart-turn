@@ -339,10 +339,10 @@ Known limits, stated in the report: completes reflect the agent's decisions; ses
 
 - [ ] `data/labels/*.jsonl` and `*.audio.jsonl` complete; text-vs-audio agreement table in `reports/label_agreement.md`; built parquet carries both labels.
 - [x] Stage 2: `eval.py` reproduces TamilEOT published numbers; stock baselines recorded in `reports/`.
-- [ ] Smoke-test run exported fp32 + int8 ONNX.
-- [ ] `reports/eval_indic-base.md` and `reports/eval_indic-tiny.md` with per-language table, CIs, ambiguous subset, TamilEOT and v3.2 numbers, thresholds, latency.
-- [ ] The report states the acceptance targets, the shipped model, and the reasons for the choice.
-- [ ] Drop-in check passes with upstream `inference.py` and Pipecat.
+- [x] Smoke-test run exported fp32 + int8 ONNX (Stage 4).
+- [x] `reports/eval_all_test.md`, `reports/eval_all_test_ambiguous.md`, `reports/eval_base_int8_variants.md`, `reports/thresholds.md`, summarised in `reports/STAGE6_REPORT.md`.
+- [x] `reports/STAGE6_REPORT.md` states targets, results and the shipping recommendation (base dynamic int8 default; base fp32 on Apple Silicon/GPU; tiny int8 for constrained CPUs).
+- [x] Drop-in check passed (Stage 7): upstream `inference.py` and Pipecat `LocalSmartTurnAnalyzerV3` agree with `eval.py` to 3 decimals.
 - [ ] Spot-check page published; the report records the user's agreement rate.
 - [ ] Hugging Face model + dataset repos published; `README.md` links them.
 - [ ] Pod terminated; final spend noted in the report.
