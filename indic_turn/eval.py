@@ -361,6 +361,7 @@ def main():
     ap.add_argument("--error-model", default="", help="Model name used for --dump-errors; defaults to the last model")
     ap.add_argument("--error-dir", default="", help="Directory for error WAVs and transcript sidecars")
     ap.add_argument("--out", default="")
+    ap.add_argument("--dump-probs", default="", help="write per-row probabilities for every model to this CSV")
     a = ap.parse_args()
     paths = [p for pat in a.data for p in sorted(glob.glob(pat))]
     rows = load_rows(paths, a.split, a.limit)
@@ -384,6 +385,12 @@ def main():
     models = [Model(*m.split("=", 1)) for m in a.models]
     print(f"{len(rows)} rows from {len(paths)} files; evaluating {[m.name for m in models]}", flush=True)
     res = evaluate(models, rows, a.batch_size)
+    if a.dump_probs:
+        import csv
+        with open(a.dump_probs, "w", newline="") as fh:
+            w = csv.writer(fh); w.writerow(["language", "dataset", "label"] + [m.name for m in models])
+            for i, r in enumerate(rows):
+                w.writerow([r["language"], r["dataset"], r["label"]] + [f"{res[m.name][i]:.5f}" for m in models])
     latency = {m.name: m.latency_ms(rows[0]["wav"]) for m in models}
     ambiguous_res = evaluate(models, ambiguous_rows, a.batch_size) if ambiguous_rows is not None else None
     dev_res = evaluate(models, dev_rows, a.batch_size) if dev_rows is not None else None
