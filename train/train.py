@@ -10,7 +10,6 @@ from onnxruntime.quantization import quantize_static, CalibrationDataReader, Qua
     QuantFormat, CalibrationMethod
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from torch import nn
-from torch.export import Dim
 from torch.nn.functional import softmax
 from torch.utils.data import Dataset
 from transformers import WhisperFeatureExtractor, WhisperPreTrainedModel, WhisperConfig
@@ -230,8 +229,9 @@ def export_to_onnx_fp32(model, output_path, config):
             assert test_output_1.shape == (1, 1), f"Expected (1, 1), got {test_output_1.shape}"
             assert test_output_2.shape == (2, 1), f"Expected (2, 1), got {test_output_2.shape}"
 
-        dynamic_shapes = {
-            'input_features': {0: Dim.DYNAMIC},
+        dynamic_axes = {
+            "input_features": {0: "batch_size"},
+            "logits": {0: "batch_size"},
         }
 
         torch.onnx.export(
@@ -243,7 +243,8 @@ def export_to_onnx_fp32(model, output_path, config):
             do_constant_folding=False,
             input_names=['input_features'],
             output_names=['logits'],
-            dynamic_shapes=dynamic_shapes,
+            dynamic_axes=dynamic_axes,
+            dynamo=False,
             verbose=False,
             external_data=False,
         )
