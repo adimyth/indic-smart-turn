@@ -157,7 +157,7 @@ In-training evaluation uses 10,031 samples: the Indic dev splits, the TamilEOT d
 | Wall time | base 18.7 min, tiny 24.0 min (594 and 460 samples per second) |
 
 > [!NOTE]
-> The fp32 ONNX uses the legacy TorchScript exporter at opset 18 with constant folding on. Folding has to stay on, or int8 quantisation leaves the file at fp32 size. Static int8 is QDQ, per-channel, MinMax on 1,024 training samples: base 81 MB to 21 MB, tiny 32 MB to 8.7 MB. `scripts/reexport.py` repeats export and quantisation from a saved checkpoint.
+> The fp32 ONNX uses the legacy TorchScript exporter at opset 18 with constant folding on. Folding has to stay on, or int8 quantisation leaves the file at fp32 size. The tiny model uses static int8 (QDQ, per-channel, MinMax calibration on 1,024 training samples): 32 MB to 8.7 MB. The base model uses dynamic int8 (weights only, no calibration): 81 MB to 24 MB, because static calibration cost it 4 to 9 points of accuracy while dynamic kept ROC-AUC unchanged. `scripts/reexport.py` repeats export and quantisation from a saved checkpoint.
 
 ### Reproducing
 
@@ -185,33 +185,38 @@ Compute cost for both runs, export, quantisation and evaluation is about $2 at t
 
 ## Results
 
-Four comparison groups, one per model size and precision. Every chart compares our model against Smart Turn v3.2 (Pipecat's shipped int8 model) on the same clean, speaker-disjoint test clips: the IndicVoices test split for all eleven Indian languages, plus Pipecat's own v3.2 test set for English, Hindi, Marathi and Bengali, plus the human-validated TamilEOT test set for Tamil. Numbers are accuracy at the default 0.5 threshold; full tables with ROC-AUC and 95% bootstrap intervals are in `reports/eval_all_test.md`, and the discussion is in `reports/STAGE6_REPORT.md`.
+Four comparison groups, one per model size and precision. Smart Turn v3.2 is Pipecat's shipped model: a whisper-tiny in two files, int8 for CPU and fp32 for GPU. There is no base-size v3.2, so each group is compared with the v3.2 file of the same precision.
 
-### Group 1: whisper-tiny, int8 (8.7 MB), the like-for-like comparison
+- Metric: accuracy at the default 0.5 threshold on the same speaker-disjoint test clips.
+- Test data: the IndicVoices test split for all eleven Indian languages; Pipecat's own v3.2 test set for English, Hindi, Marathi and Bengali; the human-validated TamilEOT test set for Tamil.
+- Full tables with ROC-AUC and 95% bootstrap intervals: `reports/eval_all_test.md`. Discussion: `reports/STAGE6_REPORT.md`.
+- **Interactive charts** with hover values and table views: `docs/charts.html`.
 
-Smart Turn v3.2 is a whisper-tiny int8 model, so this is the same size and the same speed (83 ms vs 80 ms single-thread). Ours is ahead in 11 of 12 languages, by 3 to 14 points; English is 1.2 points behind.
+### Group 1: tiny int8 vs Smart Turn v3.2 int8
+
+Same encoder size and precision as the shipped CPU file, and the same speed (83 ms vs 80 ms single-thread).
 
 ![Group 1](docs/figures/group1_tiny_int8.png)
 
-### Group 2: whisper-base, dynamic int8 (24 MB)
+### Group 2: base int8 vs Smart Turn v3.2 int8
 
-Weights-only int8 keeps ROC-AUC within 0.005 of fp32 in every language. The first int8 build used MinMax static calibration and lost 4 to 9 points; it is not shipped.
+Weights-only int8; ROC-AUC within 0.005 of fp32 in every language.
 
 ![Group 2](docs/figures/group2_base_int8.png)
 
-### Group 3: whisper-tiny, fp32 (32 MB)
+### Group 3: tiny fp32 vs Smart Turn v3.2 fp32
 
 ![Group 3](docs/figures/group3_tiny_fp32.png)
 
-### Group 4: whisper-base, fp32 (81 MB)
+### Group 4: base fp32 vs Smart Turn v3.2 fp32
 
-The best model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%, while also covering ten other languages. On Pipecat's own test set it scores 93.6% against 90.6% for Smart Turn v3.2.
+The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%. On Pipecat's own test set it scores 93.6% against 90.6%.
 
 ![Group 4](docs/figures/group4_base_fp32.png)
 
 ### Latency, batch 1, single thread
 
-| model | server core (AMD EPYC 7543) | MacBook (Apple Silicon) |
+| Model | Server core (AMD EPYC 7543) | MacBook (Apple Silicon) |
 |---|---:|---:|
 | Smart Turn v3.2 int8 | 80 ms | |
 | tiny int8 | 83 ms | 36 ms |
@@ -220,17 +225,17 @@ The best model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9
 
 ### Recommendation
 
-- **Default: base, dynamic int8.** Best accuracy per millisecond on x86 servers, AUC identical to fp32.
+> **Default: base, dynamic int8.** Best accuracy per millisecond on x86 servers, AUC identical to fp32.
+
 - **base fp32** where the host is Apple Silicon or a GPU: it runs as fast as tiny there and has the best numbers.
 - **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead in every Indian language.
-
-The weakest languages are Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio, not more public data.
+- Weakest languages: Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio.
 
 ## Verification
 
 What was checked, and the outcome:
 
-| check | result |
+| Checks | Result |
 |---|---|
 | Evaluation code reproduces published numbers | Smart Turn v3.2 on TamilEOT: 70.4% / AUC 0.743 (paper 70.3 / 0.751); public Tamil base model: 86.1% / 0.922 (paper 86.13) |
 | At least 84% accuracy on every Indian language, base fp32 | 10 of 11; Assamese 83.6 with a 95% interval of 80.9 to 86.5 |
@@ -261,4 +266,31 @@ Use it wherever you would pass the stock analyzer, for example in the user-turn 
 
 ### Directly
 
-`indic_turn/eval.py` has a minimal wrapper (`Model(name, path).run([wav])`), or use the upstream `references/smart-turn/inference.py` with `ONNX_MODEL_PATH` pointed at the file. Both feed the last 8 s of audio through `WhisperFeatureExtractor(chunk_length=8)` with `do_normalize=True`.
+```python
+import numpy as np
+import onnxruntime as ort
+from transformers import WhisperFeatureExtractor
+
+session = ort.InferenceSession("indic-smart-turn-base-int8.onnx")
+feature_extractor = WhisperFeatureExtractor(chunk_length=8)
+
+def predict(audio):
+    # audio is float32 at 16 kHz, ending where the speaker paused.
+    # Keep the last 8 s, and pad the front with silence if it is shorter.
+    n = 8 * 16000
+    audio = audio[-n:] if len(audio) > n else np.pad(audio, (n - len(audio), 0))
+
+    feats = feature_extractor(
+        audio,
+        sampling_rate=16000,
+        return_tensors="np",
+        padding="max_length",
+        max_length=n,
+        truncation=True,
+        do_normalize=True,
+    )
+    mel = np.expand_dims(feats.input_features.squeeze(0).astype(np.float32), 0)
+
+    probability = session.run(None, {"input_features": mel})[0][0].item()
+    return probability  # above 0.5 means the turn is complete
+```

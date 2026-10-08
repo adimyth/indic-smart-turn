@@ -1,0 +1,89 @@
+<title>Indic Smart Turn Results</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of four small-multiple bar charts, each self-contained with legend, hover tooltip and a table view. */
+:root{
+  --bg:#fcfcfb; --surface:#f3f2ee; --ink:#141412; --ink-2:#55534d; --ink-3:#8a877f; --rule:#dedcd5; --grid:#e9e8e3;
+  --ours:#2a78d6; --base:#eb6834; --ours-ink:#1c5cab; --base-ink:#b8461f;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark; --bg:#1a1a19; --surface:#232322; --ink:#f3f2ee; --ink-2:#c3c2b7; --ink-3:#8f8d85; --rule:#3a3936; --grid:#2d2d2b; --ours:#3987e5; --base:#d95926; --ours-ink:#86b6ef; --base-ink:#f2a07f; } }
+:root[data-theme="dark"]{ color-scheme:dark; --bg:#1a1a19; --surface:#232322; --ink:#f3f2ee; --ink-2:#c3c2b7; --ink-3:#8f8d85; --rule:#3a3936; --grid:#2d2d2b; --ours:#3987e5; --base:#d95926; --ours-ink:#86b6ef; --base-ink:#f2a07f; }
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:32px 56px;padding-inline:20px}
+h1{font-size:26px;font-weight:600;margin:0 0 6px;text-wrap:balance;letter-spacing:-0.01em}
+.lede{color:var(--ink-2);max-width:66ch;margin:0 0 8px}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--ink-3);letter-spacing:.02em;text-transform:uppercase;margin-bottom:28px}
+.chart{border-top:1px solid var(--rule);padding-block:22px 10px}
+.chart h2{font-size:17px;font-weight:600;margin:0 0 4px;text-wrap:balance}
+.chart .sub{color:var(--ink-2);margin:0 0 12px;max-width:70ch}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--ink-2);margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px}
+.plot{position:relative}
+svg{display:block;width:100%;height:auto}
+.bar{cursor:default}
+.bar:hover{filter:brightness(1.12)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--font-mono);font-size:12px;padding:6px 9px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .08s}
+.tip.on{opacity:1}
+.tools{display:flex;gap:10px;align-items:center;margin-top:6px}
+button{font:inherit;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:5px 10px;cursor:pointer}
+button:hover,button:focus-visible{color:var(--ink);outline:2px solid var(--ours);outline-offset:1px}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--grid)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink-3);font-weight:500}
+.pos{color:var(--ours-ink)} .neg{color:var(--base-ink)}
+.note{color:var(--ink-3);font-size:12.5px;max-width:70ch;margin-top:24px}
+@media (max-width:520px){ .wrap{padding-inline:16px} h1{font-size:22px} }
+@media (prefers-reduced-motion: reduce){ .tip{transition:none} }
+</style>
+<div class="wrap">
+  <h1>Indic Smart Turn versus Smart Turn v3.2</h1>
+  <p class="lede">Accuracy per language on the same speaker-disjoint test clips, at the default 0.5 threshold. Hover a bar for the exact value; open the table for the numbers and the difference.</p>
+  <div class="meta">11 Indian languages + English · 20,431 test clips · four model groups</div>
+  <div id="charts"></div>
+  <p class="note">Pipecat ships Smart Turn v3.2 as two whisper-tiny files: int8 for CPU and fp32 for GPU. There is no base-size v3.2, so the base groups are compared with the tiny v3.2 file of the same precision. English, Hindi, Marathi and Bengali rows include Pipecat's own v3.2 test set; Tamil includes the human-validated TamilEOT test set.</p>
+</div>
+<script>
+const DATA = {"group1_tiny_int8": {"title": "Group 1: tiny int8 (8.7 MB) vs Smart Turn v3.2 int8 (same size, same precision)", "ours_label": "Indic Smart Turn tiny int8", "baseline_label": "Smart Turn v3.2 int8 (CPU file, whisper-tiny)", "languages": ["English", "Hindi", "Marathi", "Bengali", "Tamil", "Telugu", "Kannada", "Malayalam", "Gujarati", "Punjabi", "Odia", "Assamese"], "ours": [91.7, 89.4, 84.1, 84.3, 82.1, 85.1, 82.9, 80.9, 80.9, 80.2, 86.4, 80.4], "baseline": [92.9, 84.7, 77.9, 81.2, 70.5, 73.4, 77.7, 66.9, 73.5, 69.2, 74.6, 67.8]}, "group2_base_int8": {"title": "Group 2: base int8 (24 MB) vs Smart Turn v3.2 int8 (same precision; v3.2 has no base size)", "ours_label": "Indic Smart Turn base int8", "baseline_label": "Smart Turn v3.2 int8 (CPU file, whisper-tiny)", "languages": ["English", "Hindi", "Marathi", "Bengali", "Tamil", "Telugu", "Kannada", "Malayalam", "Gujarati", "Punjabi", "Odia", "Assamese"], "ours": [93.2, 90.7, 88.1, 85.0, 84.8, 85.0, 87.0, 82.6, 82.5, 82.7, 89.1, 81.8], "baseline": [92.9, 84.7, 77.9, 81.2, 70.5, 73.4, 77.7, 66.9, 73.5, 69.2, 74.6, 67.8]}, "group3_tiny_fp32": {"title": "Group 3: tiny fp32 (32 MB) vs Smart Turn v3.2 fp32 (same size, same precision)", "ours_label": "Indic Smart Turn tiny fp32", "baseline_label": "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)", "languages": ["English", "Hindi", "Marathi", "Bengali", "Tamil", "Telugu", "Kannada", "Malayalam", "Gujarati", "Punjabi", "Odia", "Assamese"], "ours": [93.7, 90.2, 88.1, 85.4, 83.4, 85.0, 82.3, 81.4, 82.5, 83.1, 84.9, 81.4], "baseline": [94.7, 83.0, 75.8, 75.9, 58.6, 58.1, 56.6, 49.6, 58.4, 56.7, 60.4, 55.4]}, "group4_base_fp32": {"title": "Group 4: base fp32 (81 MB) vs Smart Turn v3.2 fp32 (same precision; v3.2 has no base size)", "ours_label": "Indic Smart Turn base fp32", "baseline_label": "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)", "languages": ["English", "Hindi", "Marathi", "Bengali", "Tamil", "Telugu", "Kannada", "Malayalam", "Gujarati", "Punjabi", "Odia", "Assamese"], "ours": [94.9, 91.0, 89.6, 86.6, 86.2, 85.7, 88.6, 84.5, 84.7, 85.3, 88.5, 83.6], "baseline": [94.7, 83.0, 75.8, 75.9, 58.6, 58.1, 56.6, 49.6, 58.4, 56.7, 60.4, 55.4]}};
+const order = ["group1_tiny_int8","group2_base_int8","group3_tiny_fp32","group4_base_fp32"];
+const subs = {
+  group1_tiny_int8: "Same encoder size and precision as the shipped Smart Turn v3.2 CPU file.",
+  group2_base_int8: "Weights-only int8; ROC-AUC within 0.005 of fp32 in every language.",
+  group3_tiny_fp32: "Compared with the Smart Turn v3.2 GPU file, which is fp32.",
+  group4_base_fp32: "The most accurate model; on TamilEOT it matches the paper's whisper-base result."
+};
+const root = document.getElementById("charts");
+for (const key of order) {
+  const d = DATA[key]; const n = d.languages.length;
+  const W = 900, L = 96, R = 60, T = 8, rowH = 34, H = T + n*rowH + 30, x0 = 50, x1 = 100;
+  const sx = v => L + (v - x0) / (x1 - x0) * (W - L - R);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.title}">`;
+  for (let g = x0; g <= x1; g += 10) svg += `<line x1="${sx(g)}" x2="${sx(g)}" y1="${T}" y2="${H-26}" stroke="var(--grid)" stroke-width="1"/><text x="${sx(g)}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--ink-3)" font-family="var(--font-mono)">${g}</text>`;
+  d.languages.forEach((lang, i) => {
+    const y = T + i*rowH, o = d.ours[i], b = d.baseline[i], delta = (o - b);
+    svg += `<text x="${L-10}" y="${y+rowH/2+4}" text-anchor="end" font-size="13" fill="var(--ink)">${lang}</text>`;
+    svg += `<rect class="bar" data-tip="${d.ours_label}: ${o.toFixed(1)}%" x="${sx(x0)}" y="${y+4}" width="${sx(o)-sx(x0)}" height="11" rx="2" fill="var(--ours)"/>`;
+    svg += `<rect class="bar" data-tip="${d.baseline_label}: ${b.toFixed(1)}%" x="${sx(x0)}" y="${y+18}" width="${sx(b)-sx(x0)}" height="11" rx="2" fill="var(--base)"/>`;
+    svg += `<text x="${sx(Math.max(o,b))+8}" y="${y+rowH/2+4}" font-size="12" fill="var(--ink-2)" font-family="var(--font-mono)">${delta>=0?"+":""}${delta.toFixed(1)}</text>`;
+  });
+  svg += `</svg>`;
+  let table = `<table hidden><thead><tr><th>Language</th><th>${d.ours_label}</th><th>${d.baseline_label}</th><th>Difference</th></tr></thead><tbody>`;
+  d.languages.forEach((lang,i)=>{ const dl=d.ours[i]-d.baseline[i]; table += `<tr><td>${lang}</td><td>${d.ours[i].toFixed(1)}</td><td>${d.baseline[i].toFixed(1)}</td><td class="${dl>=0?'pos':'neg'}">${dl>=0?'+':''}${dl.toFixed(1)}</td></tr>`; });
+  table += `</tbody></table>`;
+  const sec = document.createElement("section"); sec.className = "chart";
+  sec.innerHTML = `<h2>${d.title}</h2><p class="sub">${subs[key]}</p>
+    <div class="legend"><span><i style="background:var(--ours)"></i>${d.ours_label}</span><span><i style="background:var(--base)"></i>${d.baseline_label}</span><span><i style="background:transparent;width:0"></i>Number at the end of each row: difference in points</span></div>
+    <div class="plot">${svg}<div class="tip"></div></div>
+    <div class="tools"><button type="button" id="btn-${key}" aria-expanded="false">Show table</button></div>${table}`;
+  root.appendChild(sec);
+  const tip = sec.querySelector(".tip"), plot = sec.querySelector(".plot");
+  sec.querySelectorAll(".bar").forEach(bar => {
+    bar.addEventListener("mousemove", e => { const r = plot.getBoundingClientRect(); tip.textContent = bar.dataset.tip; tip.style.left = (e.clientX - r.left) + "px"; tip.style.top = (e.clientY - r.top) + "px"; tip.classList.add("on"); });
+    bar.addEventListener("mouseleave", () => tip.classList.remove("on"));
+  });
+  const btn = sec.querySelector("button"), tbl = sec.querySelector("table");
+  btn.addEventListener("click", () => { tbl.hidden = !tbl.hidden; btn.textContent = tbl.hidden ? "Show table" : "Hide table"; btn.setAttribute("aria-expanded", String(!tbl.hidden)); });
+}
+</script>

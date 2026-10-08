@@ -16,16 +16,21 @@ for r in csv.DictReader(open("reports/test_probs.csv")):
     probs[r["language"]].append((float(r["base_int8_dynamic"]) > 0.5) == (r["label"] == "1"))
 code = {"eng":"English","hin":"Hindi","mar":"Marathi","ben":"Bengali","tam":"Tamil","tel":"Telugu","kan":"Kannada","mal":"Malayalam","guj":"Gujarati","pan":"Punjabi","ori":"Odia","asm":"Assamese"}
 for c, v in probs.items(): rows[(code.get(c, c), "base_int8_dynamic")] = 100 * np.mean(v)
-groups = [("group1_tiny_int8", "Group 1: whisper-tiny, int8 (8.7 MB) vs Smart Turn v3.2 (int8, same size)", "tiny_int8", "Indic Smart Turn tiny int8"),
-          ("group2_base_int8", "Group 2: whisper-base, dynamic int8 (24 MB) vs Smart Turn v3.2", "base_int8_dynamic", "Indic Smart Turn base int8"),
-          ("group3_tiny_fp32", "Group 3: whisper-tiny, fp32 (32 MB) vs Smart Turn v3.2", "tiny_fp32", "Indic Smart Turn tiny fp32"),
-          ("group4_base_fp32", "Group 4: whisper-base, fp32 (81 MB) vs Smart Turn v3.2", "base_fp32", "Indic Smart Turn base fp32")]
-for fname, title, key, label in groups:
-    ours = [rows[(l, key)] for l in LANGS]; v32 = [rows[(l, "stock_v3.2_cpu")] for l in LANGS]
+# Pipecat ships Smart Turn v3.2 as two whisper-tiny files: int8 for CPU and fp32 for GPU. There is no base-size v3.2,
+# so int8 groups are compared with the v3.2 int8 file and fp32 groups with the v3.2 fp32 file.
+groups = [("group1_tiny_int8", "Group 1: tiny int8 (8.7 MB) vs Smart Turn v3.2 int8 (same size, same precision)", "tiny_int8", "Indic Smart Turn tiny int8", "stock_v3.2_cpu", "Smart Turn v3.2 int8 (CPU file, whisper-tiny)"),
+          ("group2_base_int8", "Group 2: base int8 (24 MB) vs Smart Turn v3.2 int8 (same precision; v3.2 has no base size)", "base_int8_dynamic", "Indic Smart Turn base int8", "stock_v3.2_cpu", "Smart Turn v3.2 int8 (CPU file, whisper-tiny)"),
+          ("group3_tiny_fp32", "Group 3: tiny fp32 (32 MB) vs Smart Turn v3.2 fp32 (same size, same precision)", "tiny_fp32", "Indic Smart Turn tiny fp32", "stock_v3.2_gpu", "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)"),
+          ("group4_base_fp32", "Group 4: base fp32 (81 MB) vs Smart Turn v3.2 fp32 (same precision; v3.2 has no base size)", "base_fp32", "Indic Smart Turn base fp32", "stock_v3.2_gpu", "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)")]
+import json
+export = {}
+for fname, title, key, label, bkey, blabel in groups:
+    ours = [rows[(l, key)] for l in LANGS]; v32 = [rows[(l, bkey)] for l in LANGS]
+    export[fname] = {"title": title, "ours_label": label, "baseline_label": blabel, "languages": LANGS, "ours": [round(x, 1) for x in ours], "baseline": [round(x, 1) for x in v32]}
     fig, ax = plt.subplots(figsize=(9, 6.2), dpi=160); fig.patch.set_facecolor(SURF); ax.set_facecolor(SURF)
     y = np.arange(len(LANGS)); h = 0.34
     ax.barh(y - h/2 - 0.02, ours, height=h, color=OURS, label=label, zorder=3)
-    ax.barh(y + h/2 + 0.02, v32, height=h, color=V32, label="Smart Turn v3.2 (Pipecat)", zorder=3)
+    ax.barh(y + h/2 + 0.02, v32, height=h, color=V32, label=blabel, zorder=3)
     for i, (o, s) in enumerate(zip(ours, v32)):
         ax.text(max(o, s) + 0.8, y[i], f"{o - s:+.1f}", va="center", ha="left", fontsize=9, color=INK2)
     ax.set_yticks(y); ax.set_yticklabels(LANGS, color=INK, fontsize=10); ax.invert_yaxis()
@@ -33,8 +38,9 @@ for fname, title, key, label in groups:
     ax.xaxis.grid(True, color="#e6e5e1", zorder=0); ax.set_axisbelow(True)
     for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
     ax.spines["bottom"].set_color("#cfcec9"); ax.tick_params(colors=INK2, length=0)
-    ax.set_title(title, loc="left", fontsize=11, color=INK, pad=30)
+    ax.set_title(title, loc="left", fontsize=10, color=INK, pad=30)
     ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=2, frameon=False, fontsize=9, labelcolor=INK)
     ax.text(0, -0.09, "Δ = accuracy difference in points. English/Hindi/Marathi/Bengali include Pipecat's own test set; Tamil includes the human-validated TamilEOT test set.", transform=ax.transAxes, fontsize=7.5, color=INK2)
     fig.tight_layout(); fig.savefig(f"docs/figures/{fname}.png", facecolor=SURF); plt.close(fig)
     print(fname, "mean Δ %+.1f" % (np.mean(ours) - np.mean(v32)))
+json.dump(export, open("docs/figures/chart_data.json", "w"), indent=1)
