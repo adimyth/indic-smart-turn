@@ -950,8 +950,12 @@ dependencies = [
     { name = "openai" },
     { name = "pyarrow" },
     { name = "python-dotenv" },
+    { name = "resemblyzer" },
     { name = "scikit-learn" },
+    { name = "setuptools" },
+    { name = "silero-vad" },
     { name = "soundfile" },
+    { name = "torch" },
     { name = "tqdm" },
     { name = "transformers" },
 ]
@@ -987,9 +991,13 @@ requires-dist = [
     { name = "openai", specifier = ">=1.60" },
     { name = "pyarrow", specifier = ">=17" },
     { name = "python-dotenv" },
+    { name = "resemblyzer", specifier = ">=0.1.4" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scikit-learn", marker = "extra == 'train'" },
+    { name = "setuptools", specifier = "<81" },
+    { name = "silero-vad", specifier = ">=6.2.3" },
     { name = "soundfile" },
+    { name = "torch", specifier = ">=2.14.1" },
     { name = "torch", marker = "extra == 'train'" },
     { name = "torchaudio", marker = "extra == 'train'" },
     { name = "torchcodec", marker = "extra == 'train'" },
@@ -2993,6 +3001,26 @@ wheels = [
 ]
 
 [[package]]
+name = "resemblyzer"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "librosa", version = "0.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "librosa", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "torch" },
+    { name = "typing" },
+    { name = "webrtcvad" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fb/69/b71d45dca34c51467d0df29154f6eb8c19d4effb95dbbaeef6fc160b29de/Resemblyzer-0.1.4.tar.gz", hash = "sha256:ae98d6eaf1def4b91d353347f7d31f10c29e8e109b5196ab29b390293036ad19", size = 15747774, upload-time = "2023-10-12T09:34:57.809Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/b5/d897d5de5b2123a1ad5d32e8e007d83f76582f5c32c60992577263bd7c7e/Resemblyzer-0.1.4-py3-none-any.whl", hash = "sha256:8f12eb2f1a9982d32e8db7856de754709b59c93a77bcf0ff536584b619a9dd1f", size = 15747704, upload-time = "2023-10-12T09:34:48.452Z" },
+]
+
+[[package]]
 name = "safetensors"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3235,11 +3263,24 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "84.0.0"
+version = "80.10.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6d/44/f5da03a8ef95d369145c5bb53050e7877c9f3d312e128605fd9504829143/setuptools-84.0.0.tar.gz", hash = "sha256:f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73", size = 1168449, upload-time = "2026-08-08T18:27:58.365Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/95/faf61eb8363f26aa7e1d762267a8d602a1b26d4f3a1e758e92cb3cb8b054/setuptools-80.10.2.tar.gz", hash = "sha256:8b0e9d10c784bf7d262c4e5ec5d4ec94127ce206e8738f29a437945fbc219b70", size = 1200343, upload-time = "2026-01-25T22:38:17.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/9c/c510029fc6ef33a6275cd2c5d3cecd6613dfd6aa401d57c54f1c18852ccf/setuptools-84.0.0-py3-none-any.whl", hash = "sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670", size = 818216, upload-time = "2026-08-08T18:27:56.719Z" },
+    { url = "https://files.pythonhosted.org/packages/94/b8/f1f62a5e3c0ad2ff1d189590bfa4c46b4f3b6e49cef6f26c6ee4e575394d/setuptools-80.10.2-py3-none-any.whl", hash = "sha256:95b30ddfb717250edb492926c92b5221f7ef3fbcc2b07579bcd4a27da21d0173", size = 1064234, upload-time = "2026-01-25T22:38:15.216Z" },
+]
+
+[[package]]
+name = "silero-vad"
+version = "6.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/32/17/df6bfc8f659fc5c1e082c18275be67c5a581bd2d07734a65b141fc983ccf/silero_vad-6.2.3.tar.gz", hash = "sha256:d7a23b09202be4953915cb9173089bb307eed0418a9bd4794d9ec5af07fa1996", size = 29276676, upload-time = "2026-09-23T11:37:22.208Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/ef/9099037ed6f180ea33220178df4107112c0ce2bf5fb4d6f6ab19db2844ed/silero_vad-6.2.3-py3-none-any.whl", hash = "sha256:7b7f5436cfcb02fae583a05b512ea96467fd449fe54cb49a5e4f06c51a1e43b8", size = 11317527, upload-time = "2026-09-23T11:37:20.002Z" },
 ]
 
 [[package]]
@@ -3523,6 +3564,15 @@ wheels = [
 ]
 
 [[package]]
+name = "typing"
+version = "3.10.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/1b/835d4431805939d2996f8772aca1d2313a57e8860fec0e48e8e7dfe3a477/typing-3.10.0.0.tar.gz", hash = "sha256:13b4ad211f54ddbf93e5901a9967b1e07720c1d1b78d596ac6a439641aa1b130", size = 78962, upload-time = "2021-05-01T18:03:58.186Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/5d/865e17349564eb1772688d8afc5e3081a5964c640d64d1d2880ebaed002d/typing-3.10.0.0-py3-none-any.whl", hash = "sha256:12fbdfbe7d6cca1a42e485229afcb0b0c8259258cfb919b8a5e2a5c953742f89", size = 26320, upload-time = "2021-05-01T18:03:56.398Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3590,6 +3640,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/e7/821c363f0a74aa9826ca058d3f6f8f8e41697001a0a869b5ccc7eca5b0e4/wandb-0.30.0-py3-none-win_amd64.whl", hash = "sha256:217bde0a7c49482f26166a1a7bee760bb9e2658135b2d45a33aacabffec68817", size = 24083356, upload-time = "2026-09-09T00:16:36.766Z" },
     { url = "https://files.pythonhosted.org/packages/3a/60/fd40e8b1a6136f4df97739a503c239fb4dab67f093cb9cccb5a1dd9d1895/wandb-0.30.0-py3-none-win_arm64.whl", hash = "sha256:36d6d8a5b88b36ad82b0f7ffab79033a8bbba047b5a90c0b7e26d0cf3a09f0b6", size = 21788859, upload-time = "2026-09-09T00:16:39.088Z" },
 ]
+
+[[package]]
+name = "webrtcvad"
+version = "2.0.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/34/e2de2d97f3288512b9ea56f92e7452f8207eb5a0096500badf9dfd48f5e6/webrtcvad-2.0.10.tar.gz", hash = "sha256:f1bed2fb25b63fb7b1a55d64090c993c9c9167b28485ae0bcdd81cf6ede96aea", size = 66156, upload-time = "2017-01-07T23:05:18.732Z" }
 
 [[package]]
 name = "xxhash"

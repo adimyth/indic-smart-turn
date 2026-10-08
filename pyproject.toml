@@ -16,6 +16,10 @@ dependencies = [
     "onnxruntime>=1.30.0",
     "transformers>=4.48.2",
     "scikit-learn>=1.9.1",
+    "torch>=2.14.1",
+    "silero-vad>=6.2.3",
+    "resemblyzer>=0.1.4",
+    "setuptools<81",
 ]
 
 [project.optional-dependencies]
