@@ -7,6 +7,7 @@ Output: data/labels/<lang>.audio.jsonl (resumable; key = session, chunk, dataset
 from __future__ import annotations
 import argparse, base64, json, os, random, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 import urllib.request, urllib.error
 import pyarrow.parquet as pq
 from .common import DATA, LANG_NAMES, ROOT
@@ -22,13 +23,13 @@ You hear the last few seconds of ONE speaker's side of a real {lang} phone call 
 - "complete": the speaker finished and yielded the floor. The other person could reply now without interrupting. Cues: finished sentence with a finite verb, a direct question, a short answer or acknowledgement, a closing idiom, falling pitch at the end.
 - "incomplete": the speaker is mid-thought or holding the floor. Cues: ends on a conjunction or connective, a dependent/conditional/temporal clause, a verbal participle, an open list, a self-correction, a lead-in ("I wanted to say that..."), a trailing filler, or a flat/rising continuation tone and audible intake of breath.
 
-Judge the audio first (prosody and pitch at the final 300-500 ms), and use the transcript, if given, only to resolve the words. Code-mixing with English is normal.
+Judge prosody and pitch at the final 300-500 ms. Code-mixing with English is normal.
 {transcript}
 Reply with JSON only: {{"verdict": "complete" or "incomplete", "confidence": 0.0 to 1.0, "reason": "under 8 words"}}"""
 
-def gemini(key, wav_bytes, lang, text):
-    tr = f"\nTranscript: {text.strip()}\n" if text and text.strip() else "\n(No transcript available.)\n"
-    body = {"contents": [{"parts": [{"text": PROMPT.format(lang=LANG_NAMES[lang], transcript=tr)},
+def gemini(key, wav_bytes, lang, text="", audio_only=False):
+    transcript = "" if audio_only else (f"\nTranscript: {text.strip()}\n" if text and text.strip() else "\n(No transcript available.)\n")
+    body = {"contents": [{"parts": [{"text": PROMPT.format(lang=LANG_NAMES[lang], transcript=transcript)},
                                     {"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(wav_bytes).decode()}}]}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0,
                                  "thinkingConfig": {"thinkingLevel": "low"}}}
@@ -54,13 +55,15 @@ def main():
     ap.add_argument("--pausecut", type=int, default=-1, help="pause-cut clips to include; -1 = all")
     ap.add_argument("--workers", type=int, default=24); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--parquet", default=None)
+    ap.add_argument("--out", default=None, help="resumable JSONL destination")
+    ap.add_argument("--audio-only", action="store_true", help="omit transcript from both the prompt and result")
     a = ap.parse_args()
     from dotenv import load_dotenv; load_dotenv(ROOT / ".env"); key = os.environ["GEMINI_API_KEY"]
     t = pq.read_table(a.parquet or DATA / "built" / f"{a.lang}.parquet")
     d = t.to_pydict(); rng = random.Random(a.seed)
     import hashlib
     def key_of(i): return f"{d['session'][i]}|{d['chunk'][i]}|{d['dataset'][i]}|{hashlib.md5(d['audio'][i]['bytes']).hexdigest()[:10]}"
-    out = DATA / "labels" / f"{a.lang}.audio.jsonl"; done = set()
+    out = Path(a.out) if a.out else DATA / "labels" / f"{a.lang}.audio.jsonl"; out.parent.mkdir(parents=True, exist_ok=True); done = set()
     if out.exists():
         done = {r["key"] for r in map(json.loads, out.open()) if r.get("verdict") in ("complete", "incomplete")}
     cand = [i for i in range(t.num_rows) if (not a.split or d["split"][i] == a.split)]
@@ -71,12 +74,14 @@ def main():
     print(f"[{a.lang}] {len(todo)} clips to label with {MODEL} ({len(done)} cached)", flush=True)
     tin = tout = 0; t0 = time.time()
     with out.open("a") as fh, ThreadPoolExecutor(a.workers) as ex:
-        futs = {ex.submit(gemini, key, d["audio"][i]["bytes"], a.lang, d["spoken_text"][i]): i for i in todo}
+        futs = {ex.submit(gemini, key, d["audio"][i]["bytes"], a.lang, d["spoken_text"][i], a.audio_only): i for i in todo}
         for k, f in enumerate(as_completed(futs), 1):
             i = futs[f]; r = f.result(); tin += r["tokens_in"] or 0; tout += r["tokens_out"] or 0
-            fh.write(json.dumps({"key": key_of(i), "session": d["session"][i], "chunk": d["chunk"][i], "dataset": d["dataset"][i],
-                                 "split": d["split"][i], "text_label": bool(d["endpoint_bool"][i]), "text_conf": float(d["llm_conf"][i]),
-                                 "spoken_text": d["spoken_text"][i], "audio_model": MODEL, **r}, ensure_ascii=False) + "\n"); fh.flush()
+            result = {"key": key_of(i), "split": d["split"][i], "text_label": bool(d["endpoint_bool"][i]),
+                      "text_conf": float(d["llm_conf"][i]), "audio_model": MODEL, **r}
+            if not a.audio_only:
+                result.update({"session": d["session"][i], "chunk": d["chunk"][i], "dataset": d["dataset"][i], "spoken_text": d["spoken_text"][i]})
+            fh.write(json.dumps(result, ensure_ascii=False) + "\n"); fh.flush()
             if k % 200 == 0 or k == len(todo):
                 print(f"[{a.lang}]   {k}/{len(todo)} tokens in={tin} out={tout} {time.time()-t0:.0f}s ({k/(time.time()-t0):.2f} clips/s) retries={dict(STATS)}", flush=True)
 
