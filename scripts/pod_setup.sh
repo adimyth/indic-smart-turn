@@ -5,12 +5,11 @@ cd /workspace/indic-turn
 set -a; . /workspace/indic-turn/.env; set +a
 export HF_HOME=/workspace/hf INDIC_TURN_DATA=/workspace/indic-turn/data
 mkdir -p logs data/built
-if [ ! -f .deps_done ]; then
+if ! python -c "import torchcodec, transformers, datasets, onnx, onnxruntime" >/dev/null 2>&1; then
   apt-get update -qq && apt-get install -y -qq ffmpeg rsync > /dev/null
   pip install -q --break-system-packages "torchcodec==0.7.0" "transformers[torch]==4.48.2" "datasets==4.4.1" scikit-learn librosa soundfile \
       onnx onnxruntime-gpu onnxscript wandb huggingface_hub pyarrow python-dotenv openai tqdm
   python -c "import torch, torchcodec, datasets, transformers; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())"
-  touch .deps_done
 fi
 # upstream data: v3.2 (filtered to eng/hin/mar at train time) + TamilEOT clips
 python - <<'PY'
