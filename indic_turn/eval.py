@@ -185,15 +185,16 @@ def threshold_sweep(prob, labels):
 
 def evaluate(models, rows, bs=64):
     """Log-mel features are computed once per batch and shared across all mel-input models."""
+    from tqdm import tqdm
     res = {m.name: [] for m in models}
-    t0 = time.time()
+    bar = tqdm(total=len(rows), unit="clip", desc=f"scoring {len(models)} models", dynamic_ncols=True, mininterval=5)
     for i in range(0, len(rows), bs):
         wavs = [r["wav"] for r in rows[i:i + bs]]
         feats = features(wavs) if any(not m.raw_audio for m in models) else None
         for m in models:
             res[m.name].extend(m.run(wavs, feats).tolist())
-        if (i // bs) % 50 == 0:
-            print(f"  {i + len(wavs)}/{len(rows)} rows, {time.time() - t0:.0f}s", flush=True)
+        bar.update(len(wavs))
+    bar.close()
     return res
 
 def _format_ci(value, interval, percent=False):
