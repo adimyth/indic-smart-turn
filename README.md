@@ -190,29 +190,41 @@ Four comparison groups, one per model size and precision. Smart Turn v3.2 is Pip
 - Metric: accuracy at the default 0.5 threshold on the same speaker-disjoint test clips.
 - Test data: the IndicVoices test split for all eleven Indian languages; Pipecat's own v3.2 test set for English, Hindi, Marathi and Bengali; the human-validated TamilEOT test set for Tamil.
 - Full tables with ROC-AUC and 95% bootstrap intervals: `reports/eval_all_test.md`. Discussion: `reports/STAGE6_REPORT.md`.
-- **Interactive charts** with hover values and table views: `docs/charts.html`.
+- Interactive version with hover values and table views: `docs/charts.html` (open it in a browser).
 
 ### Group 1: tiny int8 vs Smart Turn v3.2 int8
 
 Same encoder size and precision as the shipped CPU file, and the same speed (83 ms vs 80 ms single-thread).
 
-![Group 1](docs/figures/group1_tiny_int8.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/group1_tiny_int8-dark.svg">
+  <img alt="group1 tiny int8 vs Smart Turn v3.2" src="docs/figures/group1_tiny_int8-light.svg" width="920">
+</picture>
 
 ### Group 2: base int8 vs Smart Turn v3.2 int8
 
 Weights-only int8; ROC-AUC within 0.005 of fp32 in every language.
 
-![Group 2](docs/figures/group2_base_int8.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/group2_base_int8-dark.svg">
+  <img alt="group2 base int8 vs Smart Turn v3.2" src="docs/figures/group2_base_int8-light.svg" width="920">
+</picture>
 
 ### Group 3: tiny fp32 vs Smart Turn v3.2 fp32
 
-![Group 3](docs/figures/group3_tiny_fp32.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/group3_tiny_fp32-dark.svg">
+  <img alt="group3 tiny fp32 vs Smart Turn v3.2" src="docs/figures/group3_tiny_fp32-light.svg" width="920">
+</picture>
 
 ### Group 4: base fp32 vs Smart Turn v3.2 fp32
 
 The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%. On Pipecat's own test set it scores 93.6% against 90.6%.
 
-![Group 4](docs/figures/group4_base_fp32.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/group4_base_fp32-dark.svg">
+  <img alt="group4 base fp32 vs Smart Turn v3.2" src="docs/figures/group4_base_fp32-light.svg" width="920">
+</picture>
 
 ### Latency, batch 1, single thread
 
@@ -230,6 +242,22 @@ The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it sc
 - **base fp32** where the host is Apple Silicon or a GPU: it runs as fast as tiny there and has the best numbers.
 - **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead in every Indian language.
 - Weakest languages: Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio.
+
+## Timings
+
+Everything measured on the runs that produced the shipped models.
+
+| Step | Time | Where |
+|---|---|---|
+| Metadata scan of IndicVoices, all 11 languages | about 3 min per language | laptop, no audio downloaded |
+| Text labelling with gpt-6-luna, 5,000 segments per language | about 10 min per language | API |
+| Shard downloads, 2 to 3 GB per language | 15 to 45 min per language, bandwidth-bound | laptop |
+| Gemini audio labelling, 60,600 clips | about 2 h with 8 languages in parallel (1 to 3 clips/s per language) | API |
+| Training, whisper-base, 4 epochs, 166,939 samples/epoch | 18.7 min (594 samples/s) | RTX A6000 |
+| Training, whisper-tiny, same data | 24.0 min (460 samples/s) | RTX A6000 |
+| ONNX export + int8 quantisation | about 8 min per model, dynamic int8 under 1 min | pod CPU |
+| Evaluation, 20,431 clips x 7 models | about 50 min with shared features and 12 threads per model | pod CPU, 96 vCPU |
+| Inference, batch 1, single thread | see the latency table under Results: 36 to 208 ms depending on model and CPU | |
 
 ## Verification
 
@@ -252,7 +280,7 @@ Still open: the listening spot-check on the IndicVoices labels and the productio
 
 ## How to use it
 
-Models are on Hugging Face at `adimyth/indic-smart-turn` (private): `indic-smart-turn-base-int8.onnx` (recommended), `indic-smart-turn-base-fp32.onnx`, `indic-smart-turn-tiny-int8.onnx`, `indic-smart-turn-tiny-fp32.onnx`. All take the same input as Smart Turn v3: 8 s of 16 kHz audio as an 80 x 800 log-mel, and return the probability that the turn is complete.
+Models are on Hugging Face at [`adimyth/indic-smart-turn`](https://huggingface.co/adimyth/indic-smart-turn): `indic-smart-turn-base-int8.onnx` (recommended), `indic-smart-turn-base-fp32.onnx`, `indic-smart-turn-tiny-int8.onnx`, `indic-smart-turn-tiny-fp32.onnx`. All take the same input as Smart Turn v3: 8 s of 16 kHz audio as an 80 x 800 log-mel, and return the probability that the turn is complete.
 
 ### Pipecat
 

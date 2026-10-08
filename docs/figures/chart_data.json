@@ -1,8 +1,8 @@
 {
  "group1_tiny_int8": {
-  "title": "Group 1: tiny int8 (8.7 MB) vs Smart Turn v3.2 int8 (same size, same precision)",
+  "title": "Tiny int8 (8.7 MB)",
   "ours_label": "Indic Smart Turn tiny int8",
-  "baseline_label": "Smart Turn v3.2 int8 (CPU file, whisper-tiny)",
+  "baseline_label": "Smart Turn v3.2 int8",
   "languages": [
    "English",
    "Hindi",
@@ -47,9 +47,9 @@
   ]
  },
  "group2_base_int8": {
-  "title": "Group 2: base int8 (24 MB) vs Smart Turn v3.2 int8 (same precision; v3.2 has no base size)",
+  "title": "Base int8 (24 MB)",
   "ours_label": "Indic Smart Turn base int8",
-  "baseline_label": "Smart Turn v3.2 int8 (CPU file, whisper-tiny)",
+  "baseline_label": "Smart Turn v3.2 int8",
   "languages": [
    "English",
    "Hindi",
@@ -94,9 +94,9 @@
   ]
  },
  "group3_tiny_fp32": {
-  "title": "Group 3: tiny fp32 (32 MB) vs Smart Turn v3.2 fp32 (same size, same precision)",
+  "title": "Tiny fp32 (32 MB)",
   "ours_label": "Indic Smart Turn tiny fp32",
-  "baseline_label": "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)",
+  "baseline_label": "Smart Turn v3.2 fp32",
   "languages": [
    "English",
    "Hindi",
@@ -141,9 +141,9 @@
   ]
  },
  "group4_base_fp32": {
-  "title": "Group 4: base fp32 (81 MB) vs Smart Turn v3.2 fp32 (same precision; v3.2 has no base size)",
+  "title": "Base fp32 (81 MB)",
   "ours_label": "Indic Smart Turn base fp32",
-  "baseline_label": "Smart Turn v3.2 fp32 (GPU file, whisper-tiny)",
+  "baseline_label": "Smart Turn v3.2 fp32",
   "languages": [
    "English",
    "Hindi",
