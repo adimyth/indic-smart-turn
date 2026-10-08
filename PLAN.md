@@ -1,6 +1,6 @@
 # Implementation Plan: Indic Smart Turn
 
-Stage-wise plan to fine-tune Pipecat Smart Turn v3 into one model covering English and 11 Indian languages.
+Stage-wise plan to train, with the Pipecat Smart Turn v3 recipe from Whisper weights, one model covering English and 11 Indian languages.
 
 Languages: Hindi, Marathi, Tamil, Kannada, Malayalam, Gujarati, Punjabi, Telugu, plus Assamese, Odia and Bengali (added 2026-10-08; same IndicVoices pipeline, ISO codes `asm`, `ori`, `ben`, scripted in `scripts/add_language.sh`).
 
