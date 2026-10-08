@@ -1,6 +1,17 @@
 # Indic Smart Turn
 
-A [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart-turn) model for English plus eleven Indian languages, trained from Whisper weights. It drops into Pipecat's `LocalSmartTurnAnalyzerV3` in place of the Smart Turn Analyser v3.2 ONNX file, and into LiveKit through the same adapter.
+A voice agent has to decide, every time the user pauses, whether they have finished speaking or are only taking a breath. Get it wrong one way and the agent interrupts; get it wrong the other way and it sits in silence. Indic Smart Turn makes that decision from the audio itself, for callers who speak **English or any of eleven Indian languages**, and it does so on a CPU in under 50 ms on a laptop core.
+
+It is a fine-tune of [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart-turn), trained on about 52,000 clips of real Indian phone conversations plus Pipecat's own data. It loads in Pipecat's `LocalSmartTurnAnalyzerV3` with a one-line change, and in LiveKit through the same adapter.
+
+**Why this model**
+
+- **Covers the languages Smart Turn v3.2 does not.** Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi, Odia and Assamese are absent from v3.2. Hindi, Marathi and Bengali are present there but were trained mostly on synthetic speech.
+- **Trained on real calls.** Every Indian-language training clip is a person on a phone line, labelled by listening to the audio, not from text.
+- **Measured against the same test clips as Smart Turn v3.2.** Ahead by 3 to 14 points at the same model size, and by 6 to 18 points with the larger encoder. On the human-validated TamilEOT benchmark it matches the published whisper-base result.
+- **One file for all languages.** No per-language switching, and English is kept.
+
+Models: [adimyth/indic-smart-turn](https://huggingface.co/adimyth/indic-smart-turn). Data: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
 
 ## Motivation
 
