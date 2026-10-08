@@ -420,11 +420,11 @@ def load_tamil_eot(config):
 def load_v32(config):
     from datasets import load_dataset
     tr = load_dataset(config["v32_train"])["train"]
-    tr = tr.filter(lambda r: r["language"] in V32_LANGS, num_proc=8)
-    eng = tr.filter(lambda r: r["language"] == "eng", num_proc=8).shuffle(seed=42)
+    tr = tr.filter(lambda language: language in V32_LANGS, input_columns="language", num_proc=8)
+    eng = tr.filter(lambda language: language == "eng", input_columns="language", num_proc=8).shuffle(seed=42)
     eng = eng.select(range(min(config["v32_eng_cap"], len(eng))))
-    rest = tr.filter(lambda r: r["language"] != "eng", num_proc=8)
-    te = load_dataset(config["v32_test"])["train"].filter(lambda r: r["language"] in V32_LANGS, num_proc=8)
+    rest = tr.filter(lambda language: language != "eng", input_columns="language", num_proc=8)
+    te = load_dataset(config["v32_test"])["train"].filter(lambda language: language in V32_LANGS, input_columns="language", num_proc=8)
     te = te.shuffle(seed=42).select(range(min(3000, len(te))))
     log.info(f"v3.2: eng={len(eng)} hin/mar={len(rest)} test={len(te)}")
     return _std(concatenate_datasets([eng, rest])), _std(te)
