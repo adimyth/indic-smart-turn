@@ -315,7 +315,8 @@ def quantize_onnx_model(
         activation_type=QuantType.QUInt8,
         weight_type=QuantType.QInt8,
         per_channel=True,
-        calibrate_method=CalibrationMethod.Entropy,
+        # Entropy calibration retains activation histograms for every tensor and exceeds the pod's memory limit.
+        calibrate_method=CalibrationMethod.MinMax,
         op_types_to_quantize=["Conv", "MatMul", "Gemm"],
     )
 
