@@ -1,6 +1,6 @@
 # Indic Smart Turn
 
-A voice agent has to decide, every time the user pauses, whether they have finished speaking or are only taking a breath. Get it wrong one way and the agent interrupts; get it wrong the other way and it sits in silence. Indic Smart Turn makes that decision from the audio itself, for Indic-language conversations (and English), and runs on a single CPU core in under 50 ms.
+A voice agent has to decide, every time the user pauses, whether they have finished speaking or pausing or thinking. Get it wrong one way and the agent interrupts; get it wrong the other way and it sits in silence. Indic Smart Turn makes that decision from the audio itself, for Indic-language conversations (and English), and runs on a single CPU core in under 50 ms.
 
 It is built with the [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart-turn) recipe, not from its weights. The encoder starts from OpenAI's Whisper (base or tiny), the decoder is dropped, Smart Turn's attention-pooling head is added, and the whole network is trained on 8-second complete-or-incomplete clips: about 52,000 from real Indian phone conversations, plus Pipecat's own data so English stays in the mix. Smart Turn v3.2 appears here only as the model we compare against. The result loads in Pipecat's `LocalSmartTurnAnalyzerV3` with a one-line change, and in LiveKit through the same adapter.
 
