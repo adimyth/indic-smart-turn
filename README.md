@@ -1,14 +1,14 @@
 # Indic Smart Turn
 
-A voice agent has to decide, every time the user pauses, whether they have finished speaking or are only taking a breath. Get it wrong one way and the agent interrupts; get it wrong the other way and it sits in silence. Indic Smart Turn makes that decision from the audio itself, for callers who speak **English or any of eleven Indian languages**, and it does so on a CPU in under 50 ms on a laptop core.
+A voice agent has to decide, every time the user pauses, whether they have finished speaking or are only taking a breath. Get it wrong one way and the agent interrupts; get it wrong the other way and it sits in silence. Indic Smart Turn makes that decision from the audio itself, for Indic-language conversations (and English), and runs on a single CPU core in under 50 ms.
 
 It is a fine-tune of [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart-turn), trained on about 52,000 clips of real Indian phone conversations plus Pipecat's own data. It loads in Pipecat's `LocalSmartTurnAnalyzerV3` with a one-line change, and in LiveKit through the same adapter.
 
 **Why this model**
 
 - **Covers the languages Smart Turn v3.2 does not.** Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi, Odia and Assamese are absent from v3.2. Hindi, Marathi and Bengali are present there but were trained mostly on synthetic speech.
-- **Trained on real calls.** Every Indian-language training clip is a person on a phone line, labelled by listening to the audio, not from text.
-- **Measured against the same test clips as Smart Turn v3.2.** Ahead by 3 to 14 points at the same model size, and by 6 to 18 points with the larger encoder. On the human-validated TamilEOT benchmark it matches the published whisper-base result.
+- **Trained on real speech.** The Indian-language training clips are real two-person phone conversations recorded by AI4Bharat for IndicVoices, not synthetic TTS. Labels come from an audio model listening to each clip, with a text model as a second opinion.
+- **Measured against the same test clips as Smart Turn v3.2.** Ahead by 3 to 14 points at the same model size, and by 6 to 18 points with the larger encoder. On the human-validated [TamilEOT](https://arxiv.org/abs/2609.05631) benchmark it matches the published whisper-base result.
 - **One file for all languages.** No per-language switching, and English is kept.
 
 Models: [adimyth/indic-smart-turn](https://huggingface.co/adimyth/indic-smart-turn). Data: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
@@ -257,7 +257,7 @@ The table shows this on six languages: the AUC columns are close, while the fp32
 Two consequences for reading the charts:
 
 - The fp32 groups show bigger accuracy gaps than the int8 groups partly because the v3.2 fp32 file's 0.5 line is badly placed for this data, not only because our fp32 models are stronger. The AUC printed at the end of each row is the fairer comparison.
-- A few of our own lower-precision or smaller variants post a slightly higher accuracy than their bigger sibling: tiny int8 over tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5), and base int8 over base fp32 on Odia (+0.6). These are the same effect at a much smaller scale, and all of them are inside the ±3 point confidence intervals of those test sets. On AUC, base beats tiny in every language, and fp32 is equal to or above int8 for base in every language. Treat accuracy gaps under about 2 points on the smaller languages (331 to 725 test clips) as ties.
+- Our own int8 and fp32 files stay close to each other: base int8 and base fp32 land on the same side of the 0.5 line for 95.9% of test clips, with a median probability difference of 0.001, so switching precision does not move the operating point the way it does for Smart Turn v3.2. A few lower-precision or smaller variants still post a slightly higher accuracy than their bigger sibling: tiny int8 over tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5), and base int8 over base fp32 on Odia (+0.6). These are the same effect at a much smaller scale, and all of them are inside the ±3 point confidence intervals of those test sets. On AUC, base beats tiny in every language, and fp32 is equal to or above int8 for base in every language. Treat accuracy gaps under about 2 points on the smaller languages (331 to 725 test clips) as ties.
 
 ### Latency, batch 1, single thread
 
@@ -327,31 +327,46 @@ Use it wherever you would pass the stock analyzer, for example in the user-turn 
 
 ### Directly
 
+The model takes an 80 x 800 log-mel of the last 8 seconds of 16 kHz mono audio and returns the probability that the turn is complete. `config.json` records the same contract.
+
+Single clip:
+
 ```python
-import numpy as np
-import onnxruntime as ort
+import numpy as np, onnxruntime as ort, soundfile as sf
 from transformers import WhisperFeatureExtractor
 
-session = ort.InferenceSession("indic-smart-turn-base-int8.onnx")
-feature_extractor = WhisperFeatureExtractor(chunk_length=8)
+MODEL = "indic-smart-turn-base-int8.onnx"
+fe = WhisperFeatureExtractor(chunk_length=8)           # 8 s window, 80 mel bins, 800 frames
+so = ort.SessionOptions(); so.intra_op_num_threads = 1  # one core is enough at batch 1
+session = ort.InferenceSession(MODEL, so, providers=["CPUExecutionProvider"])
 
-def predict(audio):
-    # audio is float32 at 16 kHz, ending where the speaker paused.
-    # Keep the last 8 s, and pad the front with silence if it is shorter.
-    n = 8 * 16000
-    audio = audio[-n:] if len(audio) > n else np.pad(audio, (n - len(audio), 0))
+def last_8s(audio: np.ndarray, sr: int = 16000) -> np.ndarray:
+    n = 8 * sr
+    return audio[-n:] if len(audio) > n else np.pad(audio, (n - len(audio), 0))  # keep the end, zero-pad the front
 
-    feats = feature_extractor(
-        audio,
-        sampling_rate=16000,
-        return_tensors="np",
-        padding="max_length",
-        max_length=n,
-        truncation=True,
-        do_normalize=True,
-    )
-    mel = np.expand_dims(feats.input_features.squeeze(0).astype(np.float32), 0)
+def turn_complete_prob(audio: np.ndarray) -> float:
+    feats = fe(last_8s(audio), sampling_rate=16000, return_tensors="np", padding="max_length",
+               max_length=8 * 16000, truncation=True, do_normalize=True).input_features.astype(np.float32)
+    return float(session.run(None, {"input_features": feats})[0][0, 0])
 
-    probability = session.run(None, {"input_features": mel})[0][0].item()
-    return probability  # above 0.5 means the turn is complete
+audio, sr = sf.read("clip.wav", dtype="float32")        # 16 kHz mono; resample first if not
+p = turn_complete_prob(audio)
+print("complete" if p > 0.5 else "incomplete", round(p, 3))
 ```
+
+Batch of clips:
+
+```python
+def turn_complete_probs(clips: list[np.ndarray], batch_size: int = 64) -> np.ndarray:
+    out = []
+    for i in range(0, len(clips), batch_size):
+        wavs = [last_8s(c) for c in clips[i:i + batch_size]]
+        feats = fe(wavs, sampling_rate=16000, return_tensors="np", padding="max_length",
+                   max_length=8 * 16000, truncation=True, do_normalize=True).input_features.astype(np.float32)
+        out.append(session.run(None, {"input_features": feats})[0][:, 0])
+    return np.concatenate(out)
+
+probs = turn_complete_probs([sf.read(f, dtype="float32")[0] for f in ["a.wav", "b.wav", "c.wav"]])
+```
+
+For batch scoring raise `intra_op_num_threads` to the number of cores you can spare.
