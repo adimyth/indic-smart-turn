@@ -8,23 +8,6 @@ Smart Turn listens to the user's raw audio and decides whether they have finishe
 
 This project trains one Indic-focused model so a voice agent serving Indian users loads a single checkpoint instead of per-language files, and keeps English.
 
-## Languages
-
-| Code | Language | In Smart Turn Analyser v3.2? | Data here |
-|---|---|---|---|
-| eng | English | yes | Pipecat v3.2 (capped) |
-| hin | Hindi | yes | IndicVoices + Pipecat v3.2 |
-| mar | Marathi | yes | IndicVoices + Pipecat v3.2 |
-| tam | Tamil | no | TamilEOT + IndicVoices |
-| kan | Kannada | no | IndicVoices |
-| mal | Malayalam | no | IndicVoices |
-| guj | Gujarati | no | IndicVoices |
-| pan | Punjabi | no | IndicVoices |
-| tel | Telugu | no | IndicVoices |
-| asm | Assamese | no | IndicVoices |
-| ori | Odia | no | IndicVoices |
-| ben | Bengali | yes | IndicVoices + Pipecat v3.2 |
-
 ## Data sources
 
 | Source | License | What it contributes |
@@ -93,69 +76,57 @@ Transcript:   none
 
 Only about half of such cuts sound incomplete when heard, so a pause-cut is kept only when the audio label says incomplete. Segments shorter than 1.5 s, almost all one-word acknowledgements, are capped at 20% of each language so they do not crowd out the hard mid-length cases.
 
-## Dataset
+## Languages
 
-Eleven languages, 50,421 samples. Available on Hugging Face: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
+English plus eleven Indian languages. The built Indic set is 50,421 samples: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data). English is a capped sample of Pipecat v3.2 and is not in these tables. Hindi, Marathi and Bengali add that same Pipecat mix on top of IndicVoices, and Tamil adds TamilEOT.
 
 Ambiguous clips were taken out of test because the text label and the audio label disagree.
 
 | Language | Samples | Train | Dev | Test | Ambiguous |
 |---|---:|---:|---:|---:|---:|
-| hin | 4,864 | 3,837 | 527 | 460 | 40 |
-| tel | 5,167 | 3,776 | 598 | 725 | 68 |
-| kan | 4,005 | 3,224 | 371 | 385 | 25 |
-| mar | 4,747 | 3,638 | 521 | 537 | 51 |
-| tam | 2,616 | 2,071 | 226 | 300 | 19 |
-| mal | 4,714 | 3,845 | 376 | 472 | 21 |
-| guj | 4,907 | 4,007 | 368 | 498 | 34 |
-| pan | 4,808 | 3,843 | 366 | 556 | 43 |
-| asm | 4,770 | 3,690 | 388 | 639 | 53 |
-| ori | 4,455 | 3,854 | 248 | 331 | 22 |
-| ben | 5,368 | 4,140 | 717 | 482 | 29 |
+| Hindi | 4,864 | 3,837 | 527 | 460 | 40 |
+| Marathi | 4,747 | 3,638 | 521 | 537 | 51 |
+| Tamil | 2,616 | 2,071 | 226 | 300 | 19 |
+| Kannada | 4,005 | 3,224 | 371 | 385 | 25 |
+| Malayalam | 4,714 | 3,845 | 376 | 472 | 21 |
+| Gujarati | 4,907 | 4,007 | 368 | 498 | 34 |
+| Punjabi | 4,808 | 3,843 | 366 | 556 | 43 |
+| Telugu | 5,167 | 3,776 | 598 | 725 | 68 |
+| Assamese | 4,770 | 3,690 | 388 | 639 | 53 |
+| Odia | 4,455 | 3,854 | 248 | 331 | 22 |
+| Bengali | 5,368 | 4,140 | 717 | 482 | 29 |
 
 Complete is the share of clips labelled as a finished turn.
 
 | Language | Complete | Text vs audio agreement |
 |---|---:|---:|
-| hin | 70.3% | 90.9% |
-| tel | 70.8% | 90.4% |
-| kan | 74.6% | 90.7% |
-| mar | 67.5% | 89.5% |
-| tam | 75.2% | 93.3% |
-| mal | 70.6% | 93.3% |
-| guj | 67.7% | 92.0% |
-| pan | 67.5% | 91.2% |
-| asm | 69.6% | 89.1% |
-| ori | 72.3% | 89.3% |
-| ben | 69.6% | 92.0% |
-
-## Technique
-
-We keep the upstream Smart Turn v3 architecture and recipe: a Whisper encoder with the decoder discarded, 8 s of 16 kHz audio (the last 8 s, zero-padded at the front), attention pooling, a small MLP classifier, and BCE loss with per-batch positive weighting. We train from Whisper weights with upstream's `train.py` (vendored and patched in `train/`), export to ONNX fp32, and quantise to int8 with static calibration.
-
-We train two sizes on identical data and compare them:
-
-| Encoder | Params | int8 size | CPU latency (1 thread) |
-|---|---|---|---|
-| whisper-tiny | 8M | ~8 MB | ~80 ms |
-| whisper-base | 20M | ~21 MB | ~140 ms |
-
+| Hindi | 70.3% | 90.9% |
+| Marathi | 67.5% | 89.5% |
+| Tamil | 75.2% | 93.3% |
+| Kannada | 74.6% | 90.7% |
+| Malayalam | 70.6% | 93.3% |
+| Gujarati | 67.7% | 92.0% |
+| Punjabi | 67.5% | 91.2% |
+| Telugu | 70.8% | 90.4% |
+| Assamese | 69.6% | 89.1% |
+| Odia | 72.3% | 89.3% |
+| Bengali | 69.6% | 92.0% |
 
 ## How the model was trained
 
 ### Machine
 
-One RunPod on-demand pod, created with `scripts/pod_create.py` and provisioned by `scripts/pod_setup.sh`:
+One RunPod on-demand pod
 
 | | |
 |---|---|
-| GPU | NVIDIA RTX A6000, 48 GB (driver 595.91) |
+| GPU | NVIDIA RTX A6000, 48 GB |
 | CPU | AMD EPYC 7543, 96 vCPU |
 | RAM | 503 GB |
-| Storage | 140 GB network volume at `/workspace` |
+| Storage | 140 GB |
 | Image | `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404` |
 | Price | $0.53 per hour |
-| Software | torch 2.8.0+cu128, transformers 4.48.2, datasets 4.4.1, torchcodec 0.7.0, onnxruntime 1.30.0 |
+| Packages | torch 2.8.0+cu128, transformers 4.48.2, datasets 4.4.1, torchcodec 0.7.0, onnxruntime 1.30.0 |
 
 The GPU is not the bottleneck: training is bound by audio decoding on the CPU, which is why the pod with 96 vCPUs was chosen over cheaper cards with fewer cores.
 
@@ -185,42 +156,109 @@ In-training evaluation uses 10,031 samples: the Indic dev splits, the TamilEOT d
 | Checkpoint | best in-training eval F1 |
 | Wall time | base 18.7 min, tiny 24.0 min (594 and 460 samples per second) |
 
-### Export and quantisation
-
-The fp32 ONNX is exported with the legacy TorchScript exporter at opset 18 with constant folding on; without folding the weights stay as constant nodes and the quantiser only quantises activations, which left a first int8 build at fp32 size. Static int8 quantisation uses onnxruntime `quantize_static` in QDQ format, per-channel, MinMax calibration on 1,024 stratified training samples (entropy calibration ran out of memory in the container). Sizes: base 81 MB fp32 / 21 MB int8, tiny 32 MB fp32 / 8.7 MB int8. `scripts/reexport.py` re-exports and re-quantises a saved checkpoint without retraining.
+> [!NOTE]
+> The fp32 ONNX uses the legacy TorchScript exporter at opset 18 with constant folding on. Folding has to stay on, or int8 quantisation leaves the file at fp32 size. Static int8 is QDQ, per-channel, MinMax on 1,024 training samples: base 81 MB to 21 MB, tiny 32 MB to 8.7 MB. `scripts/reexport.py` repeats export and quantisation from a saved checkpoint.
 
 ### Reproducing
 
 ```bash
+# Create the RunPod pod and write its SSH endpoint to .pod_ssh.
 uv run python scripts/pod_create.py
-scripts/pod_sync.sh && scripts/pod_ssh.sh "cd /workspace/indic-turn && bash scripts/pod_setup.sh"
+
+# Copy the repo to the pod, then install dependencies and download the upstream datasets.
+scripts/pod_sync.sh
+scripts/pod_ssh.sh "cd /workspace/indic-turn && bash scripts/pod_setup.sh"
+
+# Train whisper-base, then whisper-tiny. Each run builds, trains, and quantises in the background.
 scripts/pod_ssh.sh "cd /workspace/indic-turn && BASE_MODEL=openai/whisper-base nohup bash scripts/pod_pipeline.sh indic-base > logs/pipeline_indic-base.log 2>&1 &"
 scripts/pod_ssh.sh "cd /workspace/indic-turn && BASE_MODEL=openai/whisper-tiny nohup bash scripts/pod_pipeline.sh indic-tiny > logs/pipeline_indic-tiny.log 2>&1 &"
+
+# After both runs finish, score every model on the held-out test split and the ambiguous split.
 scripts/pod_ssh.sh "cd /workspace/indic-turn && nohup bash scripts/pod_eval_all.sh > logs/eval_all.log 2>&1 &"
-scripts/pod_pull.sh
+
+# Copy each checkpoint, plus reports and logs, back to this machine.
+scripts/pod_pull.sh indic-base
+scripts/pod_pull.sh indic-tiny
 ```
 
 Compute cost for both runs, export, quantisation and evaluation is about $2 at the price above.
 
+## Results
+
+Four comparison groups, one per model size and precision. Every chart compares our model against Smart Turn v3.2 (Pipecat's shipped int8 model) on the same clean, speaker-disjoint test clips: the IndicVoices test split for all eleven Indian languages, plus Pipecat's own v3.2 test set for English, Hindi, Marathi and Bengali, plus the human-validated TamilEOT test set for Tamil. Numbers are accuracy at the default 0.5 threshold; full tables with ROC-AUC and 95% bootstrap intervals are in `reports/eval_all_test.md`, and the discussion is in `reports/STAGE6_REPORT.md`.
+
+### Group 1: whisper-tiny, int8 (8.7 MB), the like-for-like comparison
+
+Smart Turn v3.2 is a whisper-tiny int8 model, so this is the same size and the same speed (83 ms vs 80 ms single-thread). Ours is ahead in 11 of 12 languages, by 3 to 14 points; English is 1.2 points behind.
+
+![Group 1](docs/figures/group1_tiny_int8.png)
+
+### Group 2: whisper-base, dynamic int8 (24 MB)
+
+Weights-only int8 keeps ROC-AUC within 0.005 of fp32 in every language. The first int8 build used MinMax static calibration and lost 4 to 9 points; it is not shipped.
+
+![Group 2](docs/figures/group2_base_int8.png)
+
+### Group 3: whisper-tiny, fp32 (32 MB)
+
+![Group 3](docs/figures/group3_tiny_fp32.png)
+
+### Group 4: whisper-base, fp32 (81 MB)
+
+The best model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%, while also covering ten other languages. On Pipecat's own test set it scores 93.6% against 90.6% for Smart Turn v3.2.
+
+![Group 4](docs/figures/group4_base_fp32.png)
+
+### Latency, batch 1, single thread
+
+| model | server core (AMD EPYC 7543) | MacBook (Apple Silicon) |
+|---|---:|---:|
+| Smart Turn v3.2 int8 | 80 ms | |
+| tiny int8 | 83 ms | 36 ms |
+| base dynamic int8 | 122 ms | 44 ms |
+| base fp32 | 190 to 208 ms | 37 ms |
+
+### Recommendation
+
+- **Default: base, dynamic int8.** Best accuracy per millisecond on x86 servers, AUC identical to fp32.
+- **base fp32** where the host is Apple Silicon or a GPU: it runs as fast as tiny there and has the best numbers.
+- **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead in every Indian language.
+
+The weakest languages are Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio, not more public data.
+
 ## Verification
 
-`reports/eval_<run>.md` reports per language, for Smart Turn Analyser v3.2 (cpu/gpu), the public Tamil model, and our tiny/base in fp32/int8:
+What was checked, and the outcome:
 
-- Accuracy and ROC-AUC with 95% bootstrap confidence intervals on the clean, speaker-disjoint test split, plus precision and recall of the incomplete class (the one that prevents interruptions).
-- The ambiguous subset scored on its own, so label noise stays visible.
-- Human-validated sets: TamilEOT test (paper baseline 83.7% tiny / 86.1% base) and Pipecat v3.2 test for English, Hindi and Marathi as a regression check against Smart Turn Analyser v3.2.
-- A threshold sweep per language on dev, the int8 versus fp32 gap, and single-thread CPU latency.
-- The highest-confidence errors dumped as audio for listening, and a spot-check page that records human agreement with the labels.
-- A drop-in test with upstream `inference.py` and Pipecat's `LocalSmartTurnAnalyzerV3`.
+| check | result |
+|---|---|
+| Evaluation code reproduces published numbers | Smart Turn v3.2 on TamilEOT: 70.4% / AUC 0.743 (paper 70.3 / 0.751); public Tamil base model: 86.1% / 0.922 (paper 86.13) |
+| At least 84% accuracy on every Indian language, base fp32 | 10 of 11; Assamese 83.6 with a 95% interval of 80.9 to 86.5 |
+| AUC at least 0.90 on every Indian language, base fp32 | 8 of 11; Assamese 0.892, Gujarati 0.895, Malayalam 0.859 |
+| English within 2 points of Smart Turn v3.2 | pass, base fp32 is 2.0 points above |
+| TamilEOT at least 84% | pass, 85.9 |
+| int8 within 1 point of fp32 | base dynamic int8: AUC within 0.005, accuracy 0.7 to 2.6 points below at threshold 0.5; tiny int8 within 2 points except Marathi (4.0) |
+| Ambiguous test clips (text and audio labels disagree) scored separately | all models 44 to 76% on these 400 clips; reported in `reports/eval_all_test_ambiguous.md` |
+| Per-language thresholds | tuned on dev, they do not transfer to test (dev splits are 250 to 700 clips), so the default 0.5 is kept; tune one global threshold per deployment |
+| Drop-in with Pipecat `LocalSmartTurnAnalyzerV3` and upstream `inference.py` | pass; probabilities agree to three decimals |
+| Human-validated data | TamilEOT test (4,168 clips) and Pipecat's v3.2 test set; the IndicVoices labels are Gemini audio verdicts with a text-model second opinion, 89 to 93% agreement per language |
 
-Acceptance targets: at least 84% accuracy and 0.90 AUC on each Indic language, int8 within 1 point of fp32, English within 2 points of Smart Turn Analyser v3.2.
+Still open: the listening spot-check on the IndicVoices labels and the production-call evaluation (Stage 9 in `PLAN.md`).
 
 ## How to use it
 
+Models are on Hugging Face at `adimyth/indic-smart-turn` (private): `indic-smart-turn-base-int8.onnx` (recommended), `indic-smart-turn-base-fp32.onnx`, `indic-smart-turn-tiny-int8.onnx`, `indic-smart-turn-tiny-fp32.onnx`. All take the same input as Smart Turn v3: 8 s of 16 kHz audio as an 80 x 800 log-mel, and return the probability that the turn is complete.
+
 ### Pipecat
 
-Coming soon, once the model is trained.
+```python
+from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
 
-### Directly the model
+analyzer = LocalSmartTurnAnalyzerV3(smart_turn_model_path="indic-smart-turn-base-int8.onnx")
+```
 
-Coming soon, once the model is trained.
+Use it wherever you would pass the stock analyzer, for example in the user-turn stop strategy. The default threshold is 0.5.
+
+### Directly
+
+`indic_turn/eval.py` has a minimal wrapper (`Model(name, path).run([wav])`), or use the upstream `references/smart-turn/inference.py` with `ONNX_MODEL_PATH` pointed at the file. Both feed the last 8 s of audio through `WhisperFeatureExtractor(chunk_length=8)` with `do_normalize=True`.

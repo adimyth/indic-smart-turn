@@ -2,7 +2,7 @@
 
 Reports per-language and per-dataset metrics, 95% bootstrap confidence intervals, dev-split threshold sweeps, error clips, and single-sample CPU latency.
 
-usage: python -m indic_turn.eval --models stock=path/a.onnx ours=path/b.onnx \
+usage: python -m indic_turn.eval --models smartturn_v3.2=path/a.onnx ours=path/b.onnx \
           --data data/built/*.parquet --split test --out reports/eval.md
 """
 from __future__ import annotations

@@ -1,10 +1,10 @@
-# Stage 6 report: Indic Smart Turn vs stock Pipecat Smart Turn v3.2
+# Stage 6 report: Indic Smart Turn vs Smart Turn v3.2 Pipecat Smart Turn v3.2
 
 Clean test split (speaker-disjoint IndicVoices test for 11 languages; English, Hindi, Marathi, Bengali also include the upstream v3.2 test set; Tamil also includes the human-validated TamilEOT test set). Numbers are accuracy / ROC-AUC at the default 0.5 threshold. Full tables with 95% bootstrap intervals: `eval_all_test.md`.
 
-## Group 1: whisper-tiny, int8 (8.7 MB) — like for like with stock
+## Group 1: whisper-tiny, int8 (8.7 MB) — like for like with Smart Turn v3.2
 
-| language | n | stock v3.2 (int8) | ours tiny int8 | Δ acc |
+| language | n | Smart Turn v3.2 (int8) | ours tiny int8 | Δ acc |
 |---|---:|---|---|---:|
 | English | 7820 | 92.9 / 0.978 | 91.7 / 0.973 | -1.2 |
 | Hindi | 1744 | 84.7 / 0.932 | 89.4 / 0.955 | +4.7 |
@@ -56,7 +56,7 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 
 ## Group 4: whisper-base, fp32 (81 MB)
 
-| language | ours base fp32 | rec(incomplete) | rec(complete) | vs stock Δ acc |
+| language | ours base fp32 | rec(incomplete) | rec(complete) | vs Smart Turn v3.2 Δ acc |
 |---|---|---:|---:|---:|
 | English | 94.9 / 0.988 | 94.6 | 95.2 | +2.0 |
 | Hindi | 91.0 / 0.964 | 90.7 | 91.2 | +6.3 |
@@ -73,7 +73,7 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 
 ## External sets
 
-| set | stock v3.2 int8 | tiny int8 | base int8 dynamic | base fp32 |
+| set | Smart Turn v3.2 int8 | tiny int8 | base int8 dynamic | base fp32 |
 |---|---|---|---|---|
 | TamilEOT test (4,168 human-validated clips) | 70.4 / 0.743 | 81.8 / 0.875 | 84.8 / 0.917 | 85.9 / 0.917 (paper, whisper-base: 86.1) |
 | Pipecat v3.2 test, eng/hin/mar/ben (10,878) | 90.6 / 0.968 | 90.2 / 0.966 | n/a | 93.6 / 0.983 |
@@ -82,7 +82,7 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 
 | model | pod (AMD EPYC 7543) | MacBook (Apple Silicon) |
 |---|---:|---:|
-| stock v3.2 int8 | 80 ms | — |
+| Smart Turn v3.2 int8 | 80 ms | — |
 | tiny int8 | 83 ms | 36 ms |
 | base int8 dynamic | 122 ms | 44 ms |
 | base fp32 | 190–208 ms | 37 ms |
@@ -93,7 +93,7 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 |---|---|
 | ≥ 84% accuracy on every Indic language (base fp32) | 10 of 11; Assamese 83.6 (CI 80.9–86.5) |
 | AUC ≥ 0.90 on every Indic language (base fp32) | 8 of 11; Assamese 0.892, Gujarati 0.895, Malayalam 0.859 |
-| English within 2 points of stock | pass (+2.0) |
+| English within 2 points of Smart Turn v3.2 | pass (+2.0) |
 | TamilEOT ≥ 84% | pass (85.9) |
 | int8 within 1 point of fp32 | base dynamic int8: within 0.005 AUC everywhere, accuracy −0.7 to −2.6 at threshold 0.5; tiny int8: within 2 points except Marathi (−4.0) |
 
@@ -103,13 +103,13 @@ Per-language thresholds tuned on the dev split (250–700 clips per language) do
 
 ## Ambiguous test rows (text and audio labels disagree)
 
-All models score 44–76% on these 400 clips (`eval_all_test_ambiguous.md`); the base model and stock are within noise of each other. These clips are genuinely hard and are excluded from the clean numbers above.
+All models score 44–76% on these 400 clips (`eval_all_test_ambiguous.md`); the base model and Smart Turn v3.2 are within noise of each other. These clips are genuinely hard and are excluded from the clean numbers above.
 
 ## Shipping recommendation
 
 - **Default: base, dynamic int8** (24 MB). Best accuracy per millisecond on x86 servers; AUC identical to fp32; 122 ms single-thread on a server core, 44 ms on Apple Silicon.
 - **base fp32** where the host is Apple Silicon or a GPU: same 37 ms as tiny there, and the best numbers.
-- **tiny int8** for constrained CPUs: same size and speed as stock, ahead of stock in every language by 4 to 16 points.
+- **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead of Smart Turn v3.2 in every language by 4 to 16 points.
 - Do not ship base int8 MinMax.
 
 Weakest languages are Assamese, Gujarati and Malayalam (82–85%). They have the same data volume as the others, so the gap is in the audio, not the sample count; the next lever is the Stage 9 production data for the languages you deploy.

@@ -30,7 +30,7 @@ mkdir -p models/$RUN && cp "$FP32" models/$RUN/indic-smart-turn-fp32.onnx && cp 
 
 step evaluate
 python -m indic_turn.eval \
-  --models stock_v3.2_cpu=models/smart-turn-v3.2-cpu.onnx stock_v3.2_gpu=models/smart-turn-v3.2-gpu.onnx \
+  --models smartturn_v3.2_cpu=models/smart-turn-v3.2-cpu.onnx smartturn_v3.2_gpu=models/smart-turn-v3.2-gpu.onnx \
            tamil_base_int8=models/smart-turn-tamil-base-int8.onnx \
            ours_fp32=models/$RUN/indic-smart-turn-fp32.onnx ours_int8=models/$RUN/indic-smart-turn-int8.onnx \
   --data 'data/built/*.parquet' --split test \

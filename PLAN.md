@@ -140,15 +140,15 @@ Reference measurement on 179 Telugu chunks: gpt-6-luna agreed with gpt-5.4 on 95
 
 ## Stage 2: Baselines and evaluation-code validation (done)
 
-**Original goal and why it was replaced.** The first version of this stage used stock v3.2 as a judge of our Hindi labels, with a gate of complete-recall ≥ 0.85 and AUC ≥ 0.80. The gate failed (AUC 0.63), and the investigation showed the gate was built on a false assumption: stock v3.2's published 92.8% Hindi accuracy is on its own synthetic TTS test set, and the model is weak on real Hindi phone audio. Evidence:
+**Original goal and why it was replaced.** The first version of this stage used Smart Turn v3.2 as a judge of our Hindi labels, with a gate of complete-recall ≥ 0.85 and AUC ≥ 0.80. The gate failed (AUC 0.63), and the investigation showed the gate was built on a false assumption: Smart Turn v3.2's published 92.8% Hindi accuracy is on its own synthetic TTS test set, and the model is weak on real Hindi phone audio. Evidence:
 
-- Our evaluation code reproduces the TamilEOT paper on its human-validated test set to within 0.1 point: stock v3.2 cpu 70.2% / AUC 0.749 (paper 70.30 / 0.751) and the public Tamil base model 86.1% / AUC 0.922 (paper 86.13). `reports/tamileot_test_stock.md`. So the numbers are trustworthy.
-- Stock v3.2 on our Hindi test rows: AUC 0.61–0.64 overall, 0.49 on segments under 1.5 s (one-word acknowledgements), 0.73 on 1.5–4 s, 0.67 on 4 s+. Audio-construction ablations (segment only, no trailing trim, longer trailing silence, no context) move the operating point but not the AUC, so construction is not the cause.
+- Our evaluation code reproduces the TamilEOT paper on its human-validated test set to within 0.1 point: Smart Turn v3.2 cpu 70.2% / AUC 0.749 (paper 70.30 / 0.751) and the public Tamil base model 86.1% / AUC 0.922 (paper 86.13). `reports/tamileot_test_stock.md`. So the numbers are trustworthy.
+- Smart Turn v3.2 v3.2 on our Hindi test rows: AUC 0.61–0.64 overall, 0.49 on segments under 1.5 s (one-word acknowledgements), 0.73 on 1.5–4 s, 0.67 on 4 s+. Audio-construction ablations (segment only, no trailing trim, longer trailing silence, no context) move the operating point but not the AUC, so construction is not the cause.
 - Reading the model's confident disagreements with our labels in Hindi: segments labelled complete that the model scores below 0.05 are finished questions and statements ("कब से आपको दिक्कत आ रहा है पैर का", "अच्छा नवरात्रि में व्रत हैं क्या", "नमस्ते भैया मैं टोयोटा एजेंसी से बात कर रहा हूँ बोलिए"). The labels are right; the model is wrong on real Hindi.
 
-**Gate (passes):** `eval.py` reproduces the TamilEOT published numbers within 1 point. Label quality is validated by the Gemini audio pass in Stage 3, not by the stock model.
+**Gate (passes):** `eval.py` reproduces the TamilEOT published numbers within 1 point. Label quality is validated by the Gemini audio pass in Stage 3, not by Smart Turn v3.2.
 
-**Recorded baselines to beat** (stock v3.2 cpu): Hindi IndicVoices test AUC 0.63, accuracy 63%; TamilEOT test 70.2% / 0.749. `reports/calib_hindi_stock.md`, `reports/tamileot_test_stock.md`.
+**Recorded baselines to beat** (Smart Turn v3.2 cpu): Hindi IndicVoices test AUC 0.63, accuracy 63%; TamilEOT test 70.2% / 0.749. `reports/calib_hindi_stock.md`, `reports/tamileot_test_stock.md`.
 
 ## Stage 3: Build, Gemini audio labels, spot-check page (local, in progress)
 
@@ -237,8 +237,8 @@ Reference measurement on 179 Telugu chunks: gpt-6-luna agreed with gpt-5.4 on 95
 Run `indic_turn.eval` with:
 
 - **models:**
-  - `stock_v3.2_cpu`
-  - `stock_v3.2_gpu`
+  - `smartturn_v3.2_cpu`
+  - `smartturn_v3.2_gpu`
   - `tamil_base_int8`
   - `base_fp32`
   - `base_int8`
@@ -262,7 +262,7 @@ Write `reports/eval_<run>.md` (+ `.json`). Then `scripts/pod_create.py --termina
 
 - accuracy ≥ 84% and AUC ≥ 0.90 on every Indic language
 - int8 within 1 point of fp32
-- v3.2 English ≤ 2 points below stock
+- v3.2 English ≤ 2 points below Smart Turn v3.2
 - TamilEOT test ≥ 84% (paper: 83.7 tiny / 86.1 base)
 
 Choose the shipped model as follows:
@@ -330,7 +330,7 @@ Why: the rule inherits the current agent's endpointing. A `complete` exists only
 
 ### 9.4 Evaluation and optional adaptation
 
-- `indic_turn.eval` on `data/private/*.parquet --split test` (and `test_ambiguous`) for stock v3.2, ours base, ours tiny. Report per class (recall on `incomplete` = not interrupting mid-pitch, recall on `complete` = answering promptly), plus the subset of pauses ≥ 0.5 s, plus bootstrap CIs. Plain accuracy is not a target here: the set is roughly 90% incomplete.
+- `indic_turn.eval` on `data/private/*.parquet --split test` (and `test_ambiguous`) for Smart Turn v3.2, ours base, ours tiny. Report per class (recall on `incomplete` = not interrupting mid-pitch, recall on `complete` = answering promptly), plus the subset of pauses ≥ 0.5 s, plus bootstrap CIs. Plain accuracy is not a target here: the set is roughly 90% incomplete.
 - `scripts/finetune_local.py` as before: continue from the Stage 5 checkpoint on the private train split mixed 1:1 with public data, 1–2 epochs, lr 1e-5; ship only if it beats the Stage 5 model on the private test and stays within 1 point on the public test.
 
 Known limits, stated in the report: completes reflect the agent's decisions; sessions with a near-silent trainee are excluded; this is roleplay audio (long trainee monologues), so real customer calls may differ in rhythm.
@@ -338,7 +338,7 @@ Known limits, stated in the report: completes reflect the agent's decisions; ses
 ## Verification checklist
 
 - [ ] `data/labels/*.jsonl` and `*.audio.jsonl` complete; text-vs-audio agreement table in `reports/label_agreement.md`; built parquet carries both labels.
-- [x] Stage 2: `eval.py` reproduces TamilEOT published numbers; stock baselines recorded in `reports/`.
+- [x] Stage 2: `eval.py` reproduces TamilEOT published numbers; Smart Turn v3.2 baselines recorded in `reports/`.
 - [x] Smoke-test run exported fp32 + int8 ONNX (Stage 4).
 - [x] `reports/eval_all_test.md`, `reports/eval_all_test_ambiguous.md`, `reports/eval_base_int8_variants.md`, `reports/thresholds.md`, summarised in `reports/STAGE6_REPORT.md`.
 - [x] `reports/STAGE6_REPORT.md` states targets, results and the shipping recommendation (base dynamic int8 default; base fp32 on Apple Silicon/GPU; tiny int8 for constrained CPUs).
