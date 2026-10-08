@@ -425,6 +425,7 @@ def load_v32(config):
     eng = eng.select(range(min(config["v32_eng_cap"], len(eng))))
     rest = tr.filter(lambda r: r["language"] != "eng", num_proc=8)
     te = load_dataset(config["v32_test"])["train"].filter(lambda r: r["language"] in V32_LANGS, num_proc=8)
+    te = te.shuffle(seed=42).select(range(min(3000, len(te))))
     log.info(f"v3.2: eng={len(eng)} hin/mar={len(rest)} test={len(te)}")
     return _std(concatenate_datasets([eng, rest])), _std(te)
 

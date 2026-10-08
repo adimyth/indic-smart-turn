@@ -18,6 +18,9 @@ import os
 from huggingface_hub import snapshot_download
 for r in ["pipecat-ai/smart-turn-data-v3.2-train", "pipecat-ai/smart-turn-data-v3.2-test", "santhosh-005/tamil-eot"]:
     snapshot_download(r, repo_type="dataset", token=os.environ["HF_TOKEN"]); print("ok", r)
+snapshot_download("adimyth/indic-smart-turn-data", repo_type="dataset", allow_patterns=["built/*.parquet"],
+                  local_dir="/workspace/indic-turn/data", token=os.environ["HF_TOKEN"])
+print("ok", "adimyth/indic-smart-turn-data built parquet files")
 from huggingface_hub import hf_hub_download
 os.makedirs("models", exist_ok=True)
 for repo, f, out in [("pipecat-ai/smart-turn-v3","smart-turn-v3.2-cpu.onnx","models/smart-turn-v3.2-cpu.onnx"),
