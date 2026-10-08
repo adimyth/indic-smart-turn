@@ -297,26 +297,43 @@ Choose the shipped model as follows:
    - Upload via `huggingface_hub.upload_folder`.
 3. Add a `scripts/publish.py` that does both from local files.
 
-## Stage 9: Domain adaptation on your own call recordings (optional, local only)
+## Stage 9: Production-call test set and domain adaptation (local; test-set labelling approved)
 
-Deployments have their own audio path, codecs, agent voice and speaking styles. This stage adapts the released model to a deployment's recordings and measures it on them. Everything runs on the operator's machine; nothing from this stage enters the training pod, the Hugging Face release or any third-party API. The released model from Stages 5 to 8 does not depend on it.
+Source: `data/private/additional-data.csv`, 1,618 roleplay sessions (`language, audio_file`), each an MP4 with one mono 16 kHz AAC track where a fixed TTS agent and a trainee are mixed. Verified on 7 sessions (`scripts/analyze_call.py`, `scripts/sample_calls.sh`): speaker clustering separates the two voices cleanly; the agent voice is identical across sessions and always speaks first; the agent replies 2–4.5 s after the trainee stops.
 
-Input: a CSV with columns `language, audio_file`, one row per recorded session (any container ffmpeg reads, e.g. mp4), where the user and the agent are both audible.
+### 9.1 Extraction (local, ~2 h with 4 parallel downloads)
 
-1. `scripts/extract_calls.py` (local, CPU)
-   - Decode each session to 16 kHz mono with ffmpeg. If the container has two channels with one speaker each, use them directly; otherwise separate the two speakers. Preferred method: the agent voice is a fixed TTS voice, so a speaker-embedding model (e.g. `pyannote/embedding` or resemblyzer) tags each speech region as agent or user; fall back to a two-speaker diarizer if the agent voice varies.
-   - Run Silero VAD on the user regions. Every user pause of at least 0.2 s is a candidate boundary, the same trigger Pipecat uses.
-   - Label each candidate from what follows it, the rule TamilEOT validated for the positive class: agent speech starts within 2 s and the user does not resume before it, label `complete`; the user resumes within 2 s with no agent speech, label `incomplete`; overlap (agent starts and the user resumes within 1.5 s), or neither speaks for a long time, mark `ambiguous` and drop.
-   - Cut the sample as in `build.py`: user channel only, agent regions replaced by silence, ending 0.2 s after the pause starts, last 8 s kept. Write `data/private/<lang>.parquet` with the same columns as `data/built`, plus `call_id` (a salted hash of the file name; the path itself is not stored) and `ambiguous`. Split 70/30 by `call_id` into `train` and `test`.
-   - Print per-language counts (calls, candidates, complete, incomplete, dropped) so the operator can judge coverage without opening any file. Target: at least 300 test boundaries per language, which is about 20 to 30 calls.
-   - `data/private/` is in `.gitignore` and excluded from `pod_sync.sh`.
-2. Spot-check (local): `indic_turn/spotcheck.py --source data/private` writes 30 clips per language to a local folder for listening; no artifact upload and no Gemini pass for this data.
-3. `scripts/finetune_local.py` (local GPU; Apple Silicon MPS is acceptable at reduced speed)
-   - Starts from the Stage 5 PyTorch checkpoint (`output/<run>/final_model`), so Stage 5 must also sync that checkpoint back, not only the ONNX.
-   - Data: the private `train` split mixed 1:1 with a public slice (the 8 Indic `train` parquets plus a 5,000-row English sample from v3.2), so the model adapts to the deployment audio without forgetting the public languages.
-   - 1 to 2 epochs, lr 1e-5, batch 32, otherwise the Stage 5 recipe. Export fp32 ONNX and int8 as in Stage 5.
-   - Decoding uses soundfile on the WAV bytes if torchcodec is unavailable on the local machine.
-4. Evaluation: `indic_turn.eval` on the private `test` split for three models, stock v3.2, the Stage 5 model, and the adapted model, plus the public Indic test split for the adapted model as a regression check. Ship the adapted model only if it wins on the private test and stays within 1 point on the public test; otherwise raise the public share of the mix and rerun.
+1. Download each MP4, decode to 16 kHz mono WAV, delete the MP4. Keep WAVs under `data/private/raw/` (about 25 GB).
+2. Silero VAD on the mixed track (min silence 200 ms, min speech 150 ms, pad 60 ms).
+3. Speaker embeddings (resemblyzer) per segment ≥ 0.4 s, two-cluster cosine k-means with 10 restarts.
+4. **Agent identification:** the cluster closest to the stored agent-voice reference `data/private/agent_reference.npy` (built from the first session). The first speaker of a session must be the same cluster. If the two checks disagree, or the reference similarity margin is below 0.1, or the trainee speaks less than 30 s in total, **quarantine the session** (counted, not used).
+5. Candidate boundary = every end of a trainee segment except the last in the session. For each record: pause length, `gap_user` (time until the trainee speaks again), `gap_agent` (time until the agent speaks), position in the turn.
+6. **Rule label** (behavioural, from the recording itself):
+   - `complete`: agent starts within 5 s and the trainee does not resume before the agent.
+   - `incomplete`: trainee resumes within 2 s and no agent speech before that. The 2 s bracket is kept deliberately: trainees speaking a second language pause longer while thinking.
+   - otherwise `ambiguous` (overlap, or silence from both): dropped.
+7. Clip = last 8 s of trainee-only audio (agent regions zeroed) ending 0.2 s after the pause, same as `build.py`. Write `data/private/<lang>.parquet` with the public schema plus `call_id` (salted hash, path not stored), `pause_s`, `gap_user`, `gap_agent`, `rule_label`. Split 70/30 by `call_id` into `train` and `test`.
+8. Print per language: sessions used/quarantined, boundaries, complete/incomplete/dropped, agent-latency distribution, pause-length distribution. No file names, no transcripts (no STT is run on this data).
+
+### 9.2 Gemini second opinion (test split, audio only, paid tier)
+
+Why: the rule inherits the current agent's endpointing. A `complete` exists only because the agent chose to speak; an `incomplete` with a long resume gap may be a trainee who gave up waiting. Gemini hears the clip and judges it independently of what the agent did.
+
+1. Send to `gemini-3.7-flash` (via `indic_turn/label_audio.py`, `--parquet data/private/<lang>.parquet --split test`, no transcript) **every test-split clip**: about 4,500 clips, about $3, about 40 min. Audio only, 8 s, trainee voice only, hashed ids. Nothing from the train split leaves the machine except the band in step 2.
+2. Also send train-split `incomplete` clips with `gap_user` between 0.8 and 2.0 s (the band where "kept going because nobody answered" hides), so the optional adaptation in 9.4 does not learn from them.
+3. **Final test label policy:** rule and Gemini agree → `endpoint_bool` = that label, split `test`; disagree → split `test_ambiguous`, reported separately. Train split keeps the rule label except where step 2 flips it to ambiguous (then dropped from train).
+4. Report per language: rule-vs-Gemini agreement overall, on `complete`, on `incomplete`, and on the 0.8–2.0 s band; final clean test counts per class. Agreement below 85% on either class in any language stops the pipeline for a listening review before the numbers are used.
+
+### 9.3 Human spot-check
+
+`indic_turn/spotcheck.py --source data/private` writes 20 clean and 10 ambiguous test clips per language to a local page (no upload). The user's agreement rate is recorded in the report.
+
+### 9.4 Evaluation and optional adaptation
+
+- `indic_turn.eval` on `data/private/*.parquet --split test` (and `test_ambiguous`) for stock v3.2, ours base, ours tiny. Report per class (recall on `incomplete` = not interrupting mid-pitch, recall on `complete` = answering promptly), plus the subset of pauses ≥ 0.5 s, plus bootstrap CIs. Plain accuracy is not a target here: the set is roughly 90% incomplete.
+- `scripts/finetune_local.py` as before: continue from the Stage 5 checkpoint on the private train split mixed 1:1 with public data, 1–2 epochs, lr 1e-5; ship only if it beats the Stage 5 model on the private test and stays within 1 point on the public test.
+
+Known limits, stated in the report: completes reflect the agent's decisions; sessions with a near-silent trainee are excluded; this is roleplay audio (long trainee monologues), so real customer calls may differ in rhythm.
 
 ## Verification checklist
 
