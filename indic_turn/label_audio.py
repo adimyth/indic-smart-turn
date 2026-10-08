@@ -54,36 +54,45 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="original (non pause-cut) clips; 0 = all")
     ap.add_argument("--pausecut", type=int, default=-1, help="pause-cut clips to include; -1 = all")
     ap.add_argument("--workers", type=int, default=24); ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--batch-size", type=int, default=128, help="parquet rows retained in memory at once")
     ap.add_argument("--parquet", default=None)
     ap.add_argument("--out", default=None, help="resumable JSONL destination")
     ap.add_argument("--audio-only", action="store_true", help="omit transcript from both the prompt and result")
     a = ap.parse_args()
     from dotenv import load_dotenv; load_dotenv(ROOT / ".env"); key = os.environ["GEMINI_API_KEY"]
-    t = pq.read_table(a.parquet or DATA / "built" / f"{a.lang}.parquet")
-    d = t.to_pydict(); rng = random.Random(a.seed)
+    if a.batch_size < 1:
+        raise SystemExit("--batch-size must be at least one")
+    source = pq.ParquetFile(a.parquet or DATA / "built" / f"{a.lang}.parquet")
     import hashlib
-    def key_of(i): return f"{d['session'][i]}|{d['chunk'][i]}|{d['dataset'][i]}|{hashlib.md5(d['audio'][i]['bytes']).hexdigest()[:10]}"
+    def key_of(data, i): return f"{data['session'][i]}|{data['chunk'][i]}|{data['dataset'][i]}|{hashlib.md5(data['audio'][i]['bytes']).hexdigest()[:10]}"
     out = Path(a.out) if a.out else DATA / "labels" / f"{a.lang}.audio.jsonl"; out.parent.mkdir(parents=True, exist_ok=True); done = set()
     if out.exists():
         done = {r["key"] for r in map(json.loads, out.open()) if r.get("verdict") in ("complete", "incomplete")}
-    cand = [i for i in range(t.num_rows) if (not a.split or d["split"][i] == a.split)]
-    orig = [i for i in cand if not d["dataset"][i].endswith("_pausecut") and key_of(i) not in done]
-    pc = [i for i in cand if d["dataset"][i].endswith("_pausecut") and key_of(i) not in done]
-    rng.shuffle(orig); rng.shuffle(pc)
-    todo = (orig[:a.limit] if a.limit > 0 else orig) + (pc[:a.pausecut] if a.pausecut >= 0 else pc)
-    print(f"[{a.lang}] {len(todo)} clips to label with {MODEL} ({len(done)} cached)", flush=True)
-    tin = tout = 0; t0 = time.time()
+    print(f"[{a.lang}] streaming labels with {MODEL} ({len(done)} cached)", flush=True)
+    tin = tout = processed = original = pausecuts = 0; t0 = time.time()
     with out.open("a") as fh, ThreadPoolExecutor(a.workers) as ex:
-        futs = {ex.submit(gemini, key, d["audio"][i]["bytes"], a.lang, d["spoken_text"][i], a.audio_only): i for i in todo}
-        for k, f in enumerate(as_completed(futs), 1):
-            i = futs[f]; r = f.result(); tin += r["tokens_in"] or 0; tout += r["tokens_out"] or 0
-            result = {"key": key_of(i), "split": d["split"][i], "text_label": bool(d["endpoint_bool"][i]),
-                      "text_conf": float(d["llm_conf"][i]), "audio_model": MODEL, **r}
-            if not a.audio_only:
-                result.update({"session": d["session"][i], "chunk": d["chunk"][i], "dataset": d["dataset"][i], "spoken_text": d["spoken_text"][i]})
-            fh.write(json.dumps(result, ensure_ascii=False) + "\n"); fh.flush()
-            if k % 200 == 0 or k == len(todo):
-                print(f"[{a.lang}]   {k}/{len(todo)} tokens in={tin} out={tout} {time.time()-t0:.0f}s ({k/(time.time()-t0):.2f} clips/s) retries={dict(STATS)}", flush=True)
+        for batch in source.iter_batches(batch_size=a.batch_size):
+            data = batch.to_pydict(); futs = {}
+            for i in range(batch.num_rows):
+                if a.split and data["split"][i] != a.split:
+                    continue
+                key_id = key_of(data, i); pausecut = data["dataset"][i].endswith("_pausecut")
+                if key_id in done or (pausecut and a.pausecut >= 0 and pausecuts >= a.pausecut) or (not pausecut and a.limit > 0 and original >= a.limit):
+                    continue
+                if pausecut:
+                    pausecuts += 1
+                else:
+                    original += 1
+                futs[ex.submit(gemini, key, data["audio"][i]["bytes"], a.lang, data["spoken_text"][i], a.audio_only)] = (key_id, i)
+            for f in as_completed(futs):
+                key_id, i = futs[f]; r = f.result(); processed += 1; tin += r["tokens_in"] or 0; tout += r["tokens_out"] or 0
+                result = {"key": key_id, "split": data["split"][i], "text_label": bool(data["endpoint_bool"][i]), "text_conf": float(data["llm_conf"][i]), "audio_model": MODEL, **r}
+                if not a.audio_only:
+                    result.update({"session": data["session"][i], "chunk": data["chunk"][i], "dataset": data["dataset"][i], "spoken_text": data["spoken_text"][i]})
+                fh.write(json.dumps(result, ensure_ascii=False) + "\n"); fh.flush()
+                if processed % 200 == 0:
+                    print(f"[{a.lang}]   {processed} tokens in={tin} out={tout} {time.time()-t0:.0f}s ({processed/(time.time()-t0):.2f} clips/s) retries={dict(STATS)}", flush=True)
+    print(f"[{a.lang}] complete: {processed} new labels, tokens in={tin} out={tout}", flush=True)
 
 if __name__ == "__main__":
     main()
