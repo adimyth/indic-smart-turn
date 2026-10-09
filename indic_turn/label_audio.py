@@ -1,11 +1,10 @@
-"""Stage 3: audio second opinion with Gemini. Sends a built 8 s clip (plus transcript when
-present) to gemini-3.7-flash and records a complete/incomplete verdict.
+"""Stage 3: audio second opinion with Gemini. Sends a built 8 s clip (plus transcript when present) to gemini-3.7-flash and records a complete/incomplete verdict.
 
 usage: python -m indic_turn.label_audio --lang hin --split test --limit 300 [--pausecut 50]
 Output: data/labels/<lang>.audio.jsonl (resumable; key = session, chunk, dataset).
 """
 from __future__ import annotations
-import argparse, base64, json, os, random, time
+import argparse, base64, gc, json, os, random, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import urllib.request, urllib.error
@@ -67,7 +66,8 @@ def main():
     def key_of(data, i): return f"{data['session'][i]}|{data['chunk'][i]}|{data['dataset'][i]}|{hashlib.md5(data['audio'][i]['bytes']).hexdigest()[:10]}"
     out = Path(a.out) if a.out else DATA / "labels" / f"{a.lang}.audio.jsonl"; out.parent.mkdir(parents=True, exist_ok=True); done = set()
     if out.exists():
-        done = {r["key"] for r in map(json.loads, out.open()) if r.get("verdict") in ("complete", "incomplete")}
+        with out.open() as handle:
+            done = {r["key"] for r in map(json.loads, handle) if r.get("verdict") in ("complete", "incomplete")}
     print(f"[{a.lang}] streaming labels with {MODEL} ({len(done)} cached)", flush=True)
     tin = tout = processed = original = pausecuts = 0; t0 = time.time()
     with out.open("a") as fh, ThreadPoolExecutor(a.workers) as ex:
@@ -92,6 +92,8 @@ def main():
                 fh.write(json.dumps(result, ensure_ascii=False) + "\n"); fh.flush()
                 if processed % 200 == 0:
                     print(f"[{a.lang}]   {processed} tokens in={tin} out={tout} {time.time()-t0:.0f}s ({processed/(time.time()-t0):.2f} clips/s) retries={dict(STATS)}", flush=True)
+            del futs, data, batch
+            gc.collect()
     print(f"[{a.lang}] complete: {processed} new labels, tokens in={tin} out={tout}", flush=True)
 
 if __name__ == "__main__":
