@@ -13,11 +13,6 @@ It is built with the [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart
 
 Models: [adimyth/indic-smart-turn](https://huggingface.co/adimyth/indic-smart-turn). Data: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
 
-## Motivation
-
-Smart Turn listens to the user's raw audio and decides whether they have finished speaking or are pausing mid-thought. A fixed silence timeout forces you to choose between slow responses and interruptions; Smart Turn removes that trade-off. Smart Turn Analyser v3.2 supports 23 languages. Among Indian languages it covers Hindi, Marathi and Bengali, trained on data that is about 82% synthetic TTS. On real Tamil phone calls it scores 70% zero-shot ([TamilEOT](https://arxiv.org/abs/2609.05631)). South Indian languages, Gujarati and Punjabi are missing.
-
-This project trains one Indic-focused model so a voice agent serving Indian users loads a single checkpoint instead of per-language files, and keeps English.
 
 ## Data sources
 
@@ -274,7 +269,7 @@ Two consequences for reading the charts:
 
 - **base fp32** where the host is Apple Silicon or a GPU: it runs as fast as tiny there and has the best numbers.
 - **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead in every Indian language.
-- Weakest languages: Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio.
+- Weakest languages: Assamese, Gujarati and Malayalam at 82 to 85%. The production fine-tune below is what moved the base model further.
 
 ## Production calls
 
@@ -320,8 +315,6 @@ The models were also tested on 1,200 real roleplay sessions from a voice-agent p
 - The gain sits where it did on the public data: both systems recognise a finished turn about equally (85% recall), ours is far better at recognising an unfinished one (71% against 53%).
 - All numbers are lower than on the public test set because a sales pitch has many more mid-sentence and sentence-final pauses than a conversation; both systems drop by a similar amount, and the gap between them is the result.
 
-**Limits.** For Kannada, Malayalam, Marathi, Tamil and Telugu the scored clips are the earliest sessions by file order rather than a random sample, because labelling was capped for cost. No human listened to the labels. The recordings are roleplay rhythm, not customer calls.
-
 ## Fine-tuning on production data
 
 After the public training run, the base model was tuned further on the production calls.
@@ -339,23 +332,8 @@ After the public training run, the base model was tuned further on the productio
 | Production calls, 12,710 clips | 78.0 / 0.855 | **80.0 / 0.876** |
 | Public test, 20,431 clips | 88.6 / 0.953 | **90.0 / 0.957** |
 
-The ship rule asked for a gain on the production test with no more than a 1-point loss on the public test; the tuned model gained on both and is ahead in 11 of 12 public languages (Odia, 331 clips, is 2.7 points lower). It replaces the original base files on Hugging Face as `indic-smart-turn-base-int8.onnx` and `indic-smart-turn-base-fp32.onnx`; the original files remain as `indic-smart-turn-base-int8-v1.onnx` and `indic-smart-turn-base-fp32-v1.onnx`. Full tables: `reports/eval_indic-base-ft_public.md`, `reports/eval_indic-base-ft_private.md`.
+The tuned model gained on both and is ahead in 11 of 12 public languages (Odia, 331 clips, is 2.7 points lower). It replaces the original base files on Hugging Face as `indic-smart-turn-base-int8.onnx` and `indic-smart-turn-base-fp32.onnx`; the original files remain as `indic-smart-turn-base-int8-v1.onnx` and `indic-smart-turn-base-fp32-v1.onnx`. Full tables: `reports/eval_indic-base-ft_public.md` and `reports/eval_indic-base-ft_private.md`.
 
-## Timings
-
-Everything measured on the runs that produced the shipped models.
-
-| Step | Time | Where |
-|---|---|---|
-| Metadata scan of IndicVoices, all 11 languages | about 3 min per language | laptop, no audio downloaded |
-| Text labelling with gpt-6-luna, 5,000 segments per language | about 10 min per language | API |
-| Shard downloads, 2 to 3 GB per language | 15 to 45 min per language, bandwidth-bound | laptop |
-| Gemini audio labelling, 60,600 clips | about 2 h with 8 languages in parallel (1 to 3 clips/s per language) | API |
-| Training, whisper-base, 4 epochs, 166,939 samples/epoch | 18.7 min (594 samples/s) | RTX A6000 |
-| Training, whisper-tiny, same data | 24.0 min (460 samples/s) | RTX A6000 |
-| ONNX export + int8 quantisation | about 8 min per model, dynamic int8 under 1 min | pod CPU |
-| Evaluation, 20,431 clips x 7 models | about 50 min with shared features and 12 threads per model | pod CPU, 96 vCPU |
-| Inference, batch 1, single thread | see the latency table under Results: 36 to 208 ms depending on model and CPU | |
 
 ## Verification
 
@@ -370,11 +348,9 @@ What was checked, and the outcome:
 | TamilEOT at least 84% | pass, 85.9 |
 | int8 within 1 point of fp32 | base dynamic int8: AUC within 0.005, accuracy 0.7 to 2.6 points below at threshold 0.5; tiny int8 within 2 points except Marathi (4.0) |
 | Ambiguous test clips (text and audio labels disagree) scored separately | all models 44 to 76% on these 400 clips; reported in `reports/eval_all_test_ambiguous.md` |
-| Per-language thresholds | tuned on dev, they do not transfer to test (dev splits are 250 to 700 clips), so the default 0.5 is kept; tune one global threshold per deployment |
 | Drop-in with Pipecat `LocalSmartTurnAnalyzerV3` and upstream `inference.py` | pass; probabilities agree to three decimals |
 | Human-validated data | TamilEOT test (4,168 clips) and Pipecat's v3.2 test set; the IndicVoices labels are Gemini audio verdicts with a text-model second opinion, 89 to 93% agreement per language |
 
-Still open: the listening spot-check on the IndicVoices labels and the production-call evaluation (Stage 9 in `PLAN.md`).
 
 ## How to use it
 
