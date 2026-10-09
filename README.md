@@ -322,6 +322,16 @@ The models were also tested on 1,200 real roleplay sessions from a voice-agent p
 
 **Limits.** For Kannada, Malayalam, Marathi, Tamil and Telugu the scored clips are the earliest sessions by file order rather than a random sample, because labelling was capped for cost. No human listened to the labels. The recordings are roleplay rhythm, not customer calls.
 
+## Fine-tuning on production data
+
+After the public training run, the base model was tuned further on the production calls.
+
+- **Starting point:** the Stage 5 whisper-base checkpoint, not Whisper weights.
+- **Data:** 20,649 production clips where the recording and Gemini agree (4,601 complete, 16,048 incomplete), mixed one-to-one with 20,000 clips sampled from the public Indic training set, plus 3,000 TamilEOT and 5,000 English clips. 48,649 clips in total.
+- **Recipe:** one pass over the data, learning rate 1e-5 (five times smaller than the 5e-5 used for the original training), batch 128, otherwise unchanged. 7.8 minutes on one RTX A6000.
+- **Export:** fp32 ONNX and dynamic int8, as for the released models.
+- **Ship rule:** the adapted model replaces the current one only if it scores higher on the production test set and stays within 1 point on the public test set. Both evaluations are run on the same clips as the tables above, and the result is recorded in `reports/eval_indic-base-ft_public.md` and `reports/eval_indic-base-ft_private.md`.
+
 ## Timings
 
 Everything measured on the runs that produced the shipped models.
