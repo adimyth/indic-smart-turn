@@ -99,7 +99,7 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 
 ## Threshold tuning
 
-Per-language thresholds tuned on the dev split (250–700 clips per language) do not transfer: balanced-accuracy gains on test are within ±2 points and plain accuracy usually drops (`thresholds.md`). The shipped models keep the default 0.5. Tune one global threshold per deployment on the production set from Stage 9, which is larger.
+Per-language thresholds tuned on the dev split (250–700 clips per language) do not transfer: balanced-accuracy gains on test are within ±2 points and plain accuracy usually drops. The shipped models keep the default 0.5. Tune one global threshold per deployment on the production set from Stage 9, which is larger.
 
 ## Ambiguous test rows (text and audio labels disagree)
 
