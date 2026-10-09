@@ -16,3 +16,4 @@ data/kan_shard.txt
 .claude/
 logs/
 :memory:.ses
+.DS_Store
