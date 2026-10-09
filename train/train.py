@@ -1,3 +1,4 @@
+import glob
 import os
 from dataclasses import dataclass
 from typing import List, Dict, Union
@@ -41,6 +42,12 @@ CONFIG = {
     "v32_eng_cap": int(os.environ.get("V32_ENG_CAP", "40000")),
     "tamil_eot": "santhosh-005/tamil-eot",
     "indic_repeat": int(os.environ.get("INDIC_REPEAT", "2")),  # oversample real Indic data
+    # fine-tune mode (FINETUNE=1): private parquet glob, public cap, English/TamilEOT samples
+    "finetune": os.environ.get("FINETUNE", "0") == "1",
+    "private_parquets": sorted(glob.glob(os.environ.get("PRIVATE_PARQUETS", f"{DATA_ROOT}/private/pod/*.parquet"))),
+    "public_indic_cap": int(os.environ.get("PUBLIC_INDIC_CAP", "20000")),
+    "ft_eng_cap": int(os.environ.get("FT_ENG_CAP", "5000")),
+    "ft_tamil_cap": int(os.environ.get("FT_TAMIL_CAP", "3000")),
 
     "learning_rate": float(os.environ.get("LR", "5e-5")),
     "num_epochs": float(os.environ.get("EPOCHS", "4")),
@@ -431,7 +438,51 @@ def load_v32(config):
     log.info(f"v3.2: eng={len(eng)} hin/mar={len(rest)} test={len(te)}")
     return _std(concatenate_datasets([eng, rest])), _std(te)
 
+def load_private(config):
+    from datasets import load_dataset
+    train, test = [], {}
+    for p in config["private_parquets"]:
+        ds = load_dataset("parquet", data_files=p)["train"]; lang = ds[0]["language"]
+        tr = ds.filter(lambda r: r["split"] == "train", num_proc=4); te = ds.filter(lambda r: r["split"] == "test", num_proc=4)
+        if len(tr): train.append(_std(tr))
+        if len(te): test[f"private_{lang}"] = _std(te)
+        log.info(f"private {lang}: train={len(tr)} test={len(te)}")
+    return train, test
+
+def prepare_datasets_finetune(feature_extractor, config):
+    """Continue from a checkpoint: private train rows mixed 1:1 with a capped sample of the public Indic train rows,
+    plus small English and TamilEOT samples so nothing regresses. Eval = public dev; external tests = public + private."""
+    log.info("Preparing datasets (fine-tune mode)...")
+    ensure_torchcodec_available()
+    priv_train, priv_test = load_private(config)
+    private = concatenate_datasets(priv_train)
+    ind_train, ind_dev, test_splits = load_indic(config)
+    public = concatenate_datasets(ind_train).shuffle(seed=42)
+    cap = min(config["public_indic_cap"], len(private), len(public))
+    public = public.select(range(cap))
+    ta_train, ta_dev, ta_test = load_tamil_eot(config)
+    ta_train = ta_train.shuffle(seed=42).select(range(min(config["ft_tamil_cap"], len(ta_train))))
+    v32_train, v32_test = load_v32(config)
+    eng = v32_train.filter(lambda r: r["language"] == "eng", num_proc=8).shuffle(seed=42)
+    eng = eng.select(range(min(config["ft_eng_cap"], len(eng))))
+    training = concatenate_datasets([private, public, ta_train, eng]).shuffle(seed=42)
+    evaluation = concatenate_datasets(ind_dev + [ta_dev])
+    test_splits.update(priv_test); test_splits["tamil_eot"] = ta_test; test_splits["v32_eng_hin_mar_ben"] = v32_test
+    log.info(f"fine-tune training={len(training)} (private {len(private)}, public indic {len(public)}, tamil-eot {len(ta_train)}, eng {len(eng)}); eval={len(evaluation)}")
+    pos = sum(1 for x in private["endpoint_bool"] if x); log.info(f"private class balance: complete {pos}, incomplete {len(private) - pos}")
+    wrapped_test = {name: OnDemandSmartTurnDataset(ds, feature_extractor) for name, ds in test_splits.items()}
+    return {"training": OnDemandSmartTurnDataset(training, feature_extractor), "eval": OnDemandSmartTurnDataset(evaluation, feature_extractor),
+            "test": wrapped_test, "test_merged": OnDemandSmartTurnDataset(concatenate_datasets(list(test_splits.values())), feature_extractor),
+            "raw_datasets": {"training": training, "eval": evaluation, "test": test_splits}}
+
+
 def prepare_datasets_ondemand(feature_extractor, config):
+    if config.get("finetune"):
+        return prepare_datasets_finetune(feature_extractor, config)
+    return _prepare_datasets_public(feature_extractor, config)
+
+
+def _prepare_datasets_public(feature_extractor, config):
     log.info("Preparing datasets...")
     ensure_torchcodec_available()
 
