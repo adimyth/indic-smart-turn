@@ -16,10 +16,10 @@ code = {"eng":"English","hin":"Hindi","mar":"Marathi","ben":"Bengali","tam":"Tam
 for c, (pp, yy) in probs.items():
     pp, yy = np.array(pp), np.array(yy); rows[(code.get(c, c), "base_int8_dynamic")] = 100 * np.mean((pp > 0.5) == yy); aucs[(code.get(c, c), "base_int8_dynamic")] = roc_auc_score(yy, pp)
 # Pipecat ships Smart Turn v3.2 as two whisper-tiny files: int8 (CPU) and fp32 (GPU). Each group is paired with the same-precision file.
-GROUPS = [("group1_tiny_int8", "Tiny int8 (8.7 MB)", "tiny_int8", "Indic Smart Turn tiny int8", "stock_v3.2_cpu", "Smart Turn v3.2 int8"),
-          ("group2_base_int8", "Base int8 (24 MB)", "base_int8_dynamic", "Indic Smart Turn base int8", "stock_v3.2_cpu", "Smart Turn v3.2 int8"),
-          ("group3_tiny_fp32", "Tiny fp32 (32 MB)", "tiny_fp32", "Indic Smart Turn tiny fp32", "stock_v3.2_gpu", "Smart Turn v3.2 fp32"),
-          ("group4_base_fp32", "Base fp32 (81 MB)", "base_fp32", "Indic Smart Turn base fp32", "stock_v3.2_gpu", "Smart Turn v3.2 fp32")]
+GROUPS = [("group1_tiny_int8", "Tiny int8 (8.7 MB)", "tiny_int8", "Indic Smart Turn tiny int8", "smart_turn_v3.2_cpu", "Smart Turn v3.2 int8"),
+          ("group2_base_int8", "Base int8 (24 MB)", "base_int8_dynamic", "Indic Smart Turn base int8", "smart_turn_v3.2_cpu", "Smart Turn v3.2 int8"),
+          ("group3_tiny_fp32", "Tiny fp32 (32 MB)", "tiny_fp32", "Indic Smart Turn tiny fp32", "smart_turn_v3.2_gpu", "Smart Turn v3.2 fp32"),
+          ("group4_base_fp32", "Base fp32 (81 MB)", "base_fp32", "Indic Smart Turn base fp32", "smart_turn_v3.2_gpu", "Smart Turn v3.2 fp32")]
 THEMES = {"light": dict(bg="#fcfcfb", ink="#141412", ink2="#55534d", ink3="#8a877f", grid="#e6e5df", ours="#2a78d6", base="#eb6834"),
           "dark":  dict(bg="#1a1a19", ink="#f3f2ee", ink2="#c3c2b7", ink3="#8f8d85", grid="#2f2f2c", ours="#3987e5", base="#d95926")}
 FONT = "ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"

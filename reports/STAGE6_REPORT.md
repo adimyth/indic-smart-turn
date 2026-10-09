@@ -1,4 +1,4 @@
-# Stage 6 report: Indic Smart Turn vs Smart Turn v3.2 Pipecat Smart Turn v3.2
+# Stage 6 report: Indic Smart Turn vs Pipecat Smart Turn v3.2
 
 Clean test split (speaker-disjoint IndicVoices test for 11 languages; English, Hindi, Marathi, Bengali also include the upstream v3.2 test set; Tamil also includes the human-validated TamilEOT test set). Numbers are accuracy / ROC-AUC at the default 0.5 threshold. Full tables with 95% bootstrap intervals: `eval_all_test.md`.
 
@@ -99,11 +99,11 @@ Base int8 was first built with MinMax static calibration and lost 4–9 points; 
 
 ## Threshold tuning
 
-Per-language thresholds tuned on the dev split (250–700 clips per language) do not transfer: balanced-accuracy gains on test are within ±2 points and plain accuracy usually drops. The shipped models keep the default 0.5. Tune one global threshold per deployment on the production set from Stage 9, which is larger.
+Per-language thresholds tuned on the dev split (250–700 clips per language) do not transfer: balanced-accuracy gains on test are within ±2 points and plain accuracy usually drops. The shipped models keep the default 0.5. Tune one global threshold per deployment on the production-call set, which is larger.
 
 ## Ambiguous test rows (text and audio labels disagree)
 
-All models score 44–76% on these 400 clips (`eval_all_test_ambiguous.md`); the base model and Smart Turn v3.2 are within noise of each other. These clips are genuinely hard and are excluded from the clean numbers above.
+All models score 44–81% on these 405 clips (`eval_all_test_ambiguous.md`); the base model and Smart Turn v3.2 are within noise of each other. These clips are genuinely hard and are excluded from the clean numbers above.
 
 ## Shipping recommendation
 
@@ -112,7 +112,7 @@ All models score 44–76% on these 400 clips (`eval_all_test_ambiguous.md`); the
 - **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead of Smart Turn v3.2 in every language by 4 to 16 points.
 - Do not ship base int8 MinMax.
 
-Weakest languages are Assamese, Gujarati and Malayalam (82–85%). They have the same data volume as the others, so the gap is in the audio, not the sample count; the next lever is the Stage 9 production data for the languages you deploy.
+Weakest languages are Assamese, Gujarati and Malayalam (82–85%). They have the same data volume as the others, so the gap is in the audio, not the sample count; the next lever is production data for the languages you deploy.
 
 ## Spend
 

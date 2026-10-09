@@ -8,7 +8,7 @@ It is built with the [Pipecat Smart Turn v3](https://github.com/pipecat-ai/smart
 
 - **Covers the languages Smart Turn v3.2 does not.** Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi, Odia and Assamese are absent from v3.2. Hindi, Marathi and Bengali are present there but were trained mostly on synthetic speech.
 - **Trained on real speech.** The Indian-language training clips are real two-person phone conversations recorded by AI4Bharat for IndicVoices, not synthetic TTS. Labels come from an audio model listening to each clip, with a text model as a second opinion.
-- **Measured against the same test clips as Smart Turn v3.2.** Ahead by 3 to 14 points at the same model size, and by 6 to 18 points with the larger encoder. On the human-validated [TamilEOT](https://arxiv.org/abs/2609.05631) benchmark it matches the published whisper-base result.
+- **Measured against the same test clips as Smart Turn v3.2.** Ahead by 3 to 14 points on the Indian languages at the same model size, and by 5 to 18 points with the larger encoder. On the human-validated [TamilEOT](https://arxiv.org/abs/2609.05631) benchmark it matches the published whisper-base result.
 - **One file for all languages.** No per-language switching, and English is kept.
 
 Models: [adimyth/indic-smart-turn](https://huggingface.co/adimyth/indic-smart-turn). Data: [adimyth/indic-smart-turn-data](https://huggingface.co/datasets/adimyth/indic-smart-turn-data).
@@ -20,7 +20,7 @@ Models: [adimyth/indic-smart-turn](https://huggingface.co/adimyth/indic-smart-tu
 |---|---|---|
 | [ai4bharat/IndicVoices](https://huggingface.co/datasets/ai4bharat/IndicVoices) | CC BY 4.0 | Real two-party phone conversations, one speaker per recording, split into transcript segments with human transcripts. We use the `Conversation` rows only. |
 | [santhosh-005/tamil-eot](https://huggingface.co/datasets/santhosh-005/tamil-eot) | CC BY 4.0 | 18,485 human-validated turn boundaries from 116 Tamil calls (SPRING-INX), pre-cut as 8 s clips. |
-| [pipecat-ai/smart-turn-data-v3.2](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.2-train) | CC BY 4.0 | The upstream training mix (mostly TTS) for English, Hindi and Marathi, so the model keeps English and the languages Smart Turn Analyser v3.2 already covers. |
+| [pipecat-ai/smart-turn-data-v3.2](https://huggingface.co/datasets/pipecat-ai/smart-turn-data-v3.2-train) | CC BY 4.0 | The upstream training mix (mostly TTS) for English, Hindi, Marathi and Bengali, so the model keeps English and the languages Smart Turn v3.2 already covers. |
 
 > [!NOTE]
 > IndicVoices weighs 30 to 50 GB per language, and only about 17% of it is conversational. `indic_turn/scan.py` reads the metadata columns of each parquet shard over HTTP with pyarrow column projection and picks the conversational rows. `indic_turn/build.py` then downloads only the shards that hold labelled rows, about 2 to 3 GB per language.
@@ -140,10 +140,8 @@ The GPU is not the bottleneck: training is bound by audio decoding on the CPU, w
 
 | Source | Samples | Notes |
 |---|---|---|
-| IndicVoices, 11 languages, train split | 51,917 x 2 | audio-labelled clips, oversampled twice |
-| TamilEOT train | included in the row above | real Tamil calls, human-validated |
-| Pipecat v3.2 English | 40,000 | capped random sample |
-| Pipecat v3.2 Hindi, Marathi, Bengali | 26,427 | all rows |
+| IndicVoices, 11 languages, train split | 51,917 x 2 | audio-labelled clips plus the TamilEOT train split, oversampled twice |
+| Pipecat v3.2 English, Hindi, Marathi, Bengali | 63,105 | English capped at 40,000 random rows, the rest in full, after the in-training evaluation rows are held out |
 | **Total per epoch** | **166,939** | |
 
 In-training evaluation uses 10,031 samples: the Indic dev splits, the TamilEOT dev split and 3,000 rows of the v3.2 test set. The held-out Indic test splits are never seen during training.
@@ -225,7 +223,7 @@ Weights-only int8; ROC-AUC within 0.005 of fp32 in every language.
 
 ### Group 4: base fp32 vs Smart Turn v3.2 fp32
 
-The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%. On Pipecat's own test set it scores 93.6% against 90.6%.
+The most accurate model: 84 to 95% accuracy, AUC 0.86 to 0.99. On TamilEOT it scores 85.9%, matching the paper's whisper-base result of 86.1%. On Pipecat's own test set it scores 93.6% against 93.1% for the v3.2 fp32 file.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/group4_base_fp32-dark.svg">
@@ -252,7 +250,7 @@ The table shows this on six languages: the AUC columns are close, while the fp32
 Two consequences for reading the charts:
 
 - The fp32 groups show bigger accuracy gaps than the int8 groups partly because the v3.2 fp32 file's 0.5 line is badly placed for this data, not only because our fp32 models are stronger. The AUC printed at the end of each row is the fairer comparison.
-- Our own int8 and fp32 files stay close to each other: base int8 and base fp32 land on the same side of the 0.5 line for 95.9% of test clips, with a median probability difference of 0.001, so switching precision does not move the operating point the way it does for Smart Turn v3.2. A few lower-precision or smaller variants still post a slightly higher accuracy than their bigger sibling: tiny int8 over tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5), and base int8 over base fp32 on Odia (+0.6). These are the same effect at a much smaller scale, and all of them are inside the ±3 point confidence intervals of those test sets. On AUC, base beats tiny in every language, and fp32 is equal to or above int8 for base in every language. Treat accuracy gaps under about 2 points on the smaller languages (331 to 725 test clips) as ties.
+- Our own int8 and fp32 files stay close to each other: base int8 and base fp32 land on the same side of the 0.5 line for 95.9% of test clips, with a median probability difference of 0.001, so switching precision does not move the operating point the way it does for Smart Turn v3.2. A few lower-precision or smaller variants still post a slightly higher accuracy than their bigger sibling: tiny int8 over tiny fp32 on Telugu (+0.1), Kannada (+0.6) and Odia (+1.5), and base int8 over base fp32 on Odia (+0.6) and Hindi (+0.7). These are the same effect at a much smaller scale, and all of them are inside the ±3 point confidence intervals of those test sets. On AUC, base beats tiny in every language, and base int8 stays within 0.011 of base fp32 everywhere. Treat accuracy gaps under about 2 points on the smaller languages (331 to 725 test clips) as ties.
 
 ### Latency, batch 1, single thread
 
@@ -311,7 +309,7 @@ The models were also tested on 1,200 real roleplay sessions from a voice-agent p
 
 **What it shows**
 
-- Indic Smart Turn is ahead in every language, by 8 to 18 points of accuracy and 0.06 to 0.13 of AUC with the base int8 model, and by 4 to 12 points with tiny int8, which is the same size and speed as Smart Turn v3.2.
+- Indic Smart Turn is ahead in every language, by 8 to 17 points of accuracy and 0.08 to 0.13 of AUC with the base int8 model, and by 3 to 12 points with tiny int8, which is the same size and speed as Smart Turn v3.2. The one exception is tiny int8 on Odia, where 95 clips are too few to say.
 - The gain sits where it did on the public data: both systems recognise a finished turn about equally (85% recall), ours is far better at recognising an unfinished one (71% against 53%).
 - All numbers are lower than on the public test set because a sales pitch has many more mid-sentence and sentence-final pauses than a conversation; both systems drop by a similar amount, and the gap between them is the result.
 
@@ -319,7 +317,7 @@ The models were also tested on 1,200 real roleplay sessions from a voice-agent p
 
 After the public training run, the base model was tuned further on the production calls.
 
-- **Starting point:** the Stage 5 whisper-base checkpoint, not Whisper weights.
+- **Starting point:** the whisper-base checkpoint from the public training run, not Whisper weights.
 - **Data:** 20,649 production clips where the recording and Gemini agree (4,601 complete, 16,048 incomplete), mixed one-to-one with 20,000 clips sampled from the public Indic training set, plus 3,000 TamilEOT and 5,000 English clips. 48,649 clips in total.
 - **Recipe:** one pass over the data, learning rate 1e-5 (five times smaller than the 5e-5 used for the original training), batch 128, otherwise unchanged. 7.8 minutes on one RTX A6000.
 - **Threshold:** the tuned model's probabilities sit lower than the original's, so its best decision line is 0.13 rather than 0.5. The line was chosen on the production train split only, then baked into the exported graph as a constant shift before the final sigmoid, so the shipped files work at the standard 0.5 and the ranking of clips is unchanged.
@@ -346,8 +344,8 @@ What was checked, and the outcome:
 | AUC at least 0.90 on every Indian language, base fp32 | 8 of 11; Assamese 0.892, Gujarati 0.895, Malayalam 0.859 |
 | English within 2 points of Smart Turn v3.2 | pass, base fp32 is 2.0 points above |
 | TamilEOT at least 84% | pass, 85.9 |
-| int8 within 1 point of fp32 | base dynamic int8: AUC within 0.005, accuracy 0.7 to 2.6 points below at threshold 0.5; tiny int8 within 2 points except Marathi (4.0) |
-| Ambiguous test clips (text and audio labels disagree) scored separately | all models 44 to 76% on these 400 clips; reported in `reports/eval_all_test_ambiguous.md` |
+| int8 within 1 point of fp32 | base dynamic int8: AUC within 0.005, accuracy within 2.6 points at threshold 0.5 (below on most languages, above on Hindi and Odia); tiny int8 within 2 points except Marathi (4.0) |
+| Ambiguous test clips (text and audio labels disagree) scored separately | all models 44 to 81% on these 405 clips; reported in `reports/eval_all_test_ambiguous.md` |
 | Drop-in with Pipecat `LocalSmartTurnAnalyzerV3` and upstream `inference.py` | pass; probabilities agree to three decimals |
 | Human-validated data | TamilEOT test (4,168 clips) and Pipecat's v3.2 test set; the IndicVoices labels are Gemini audio verdicts with a text-model second opinion, 89 to 93% agreement per language |
 
@@ -364,7 +362,7 @@ from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnal
 analyzer = LocalSmartTurnAnalyzerV3(smart_turn_model_path="indic-smart-turn-base-int8.onnx")
 ```
 
-Use it wherever you would pass the stock analyzer, for example in the user-turn stop strategy. The default threshold is 0.5.
+Use it wherever you would pass the built-in analyzer, for example in the user-turn stop strategy. The default threshold is 0.5.
 
 ### Directly
 

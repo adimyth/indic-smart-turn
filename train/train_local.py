@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Local training script - runs training, quantization, and benchmarking on the local machine.
-This is the local equivalent of the Modal-based training script.
+This is the script the pod pipeline runs (scripts/pod_pipeline.sh).
 """
 
 import os

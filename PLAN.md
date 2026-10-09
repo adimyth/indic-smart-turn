@@ -49,7 +49,7 @@ This is the record of the work, stage by stage: what each stage set out to do, w
 
 **What was found.**
 
-- Base fp32 is ahead of Smart Turn v3.2 in every language, by 2 points on English and 6 to 18 on the Indian languages, and matches the published TamilEOT result.
+- Base fp32 is ahead of Smart Turn v3.2 in every language, by 2 points on English and 5 to 18 on the Indian languages, and matches the published TamilEOT result.
 - Tiny int8, the same size and speed as v3.2's shipped file, is ahead in eleven of twelve languages.
 - Smart Turn v3.2's int8 file outscores its own fp32 file on accuracy in eleven languages while their AUC is nearly equal. That is a threshold effect, not a quality difference, and the README explains it so readers do not stumble on it.
 - Per-language thresholds tuned on the dev splits did not transfer to the test splits; the dev sets are too small. The default 0.5 was kept.
