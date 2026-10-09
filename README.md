@@ -329,8 +329,17 @@ After the public training run, the base model was tuned further on the productio
 - **Starting point:** the Stage 5 whisper-base checkpoint, not Whisper weights.
 - **Data:** 20,649 production clips where the recording and Gemini agree (4,601 complete, 16,048 incomplete), mixed one-to-one with 20,000 clips sampled from the public Indic training set, plus 3,000 TamilEOT and 5,000 English clips. 48,649 clips in total.
 - **Recipe:** one pass over the data, learning rate 1e-5 (five times smaller than the 5e-5 used for the original training), batch 128, otherwise unchanged. 7.8 minutes on one RTX A6000.
+- **Threshold:** the tuned model's probabilities sit lower than the original's, so its best decision line is 0.13 rather than 0.5. The line was chosen on the production train split only, then baked into the exported graph as a constant shift before the final sigmoid, so the shipped files work at the standard 0.5 and the ranking of clips is unchanged.
 - **Export:** fp32 ONNX and dynamic int8, as for the released models.
-- **Ship rule:** the adapted model replaces the current one only if it scores higher on the production test set and stays within 1 point on the public test set. Both evaluations are run on the same clips as the tables above, and the result is recorded in `reports/eval_indic-base-ft_public.md` and `reports/eval_indic-base-ft_private.md`.
+
+**Result**, int8 files, accuracy / ROC-AUC:
+
+| Test set | Before tuning | After tuning |
+|---|---|---|
+| Production calls, 12,710 clips | 78.0 / 0.855 | **80.0 / 0.876** |
+| Public test, 20,431 clips | 88.6 / 0.953 | **90.0 / 0.957** |
+
+The ship rule asked for a gain on the production test with no more than a 1-point loss on the public test; the tuned model gained on both and is ahead in 11 of 12 public languages (Odia, 331 clips, is 2.7 points lower). It replaces the original base files on Hugging Face as `indic-smart-turn-base-int8.onnx` and `indic-smart-turn-base-fp32.onnx`; the original files remain as `indic-smart-turn-base-int8-v1.onnx` and `indic-smart-turn-base-fp32-v1.onnx`. Full tables: `reports/eval_indic-base-ft_public.md`, `reports/eval_indic-base-ft_private.md`.
 
 ## Timings
 
