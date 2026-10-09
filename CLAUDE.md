@@ -13,6 +13,6 @@
 
 ## Data handling
 
-- `data/private/` is operator-only: never committed, synced to a pod, or sent to a third-party API.
+- `data/private/` is operator-only: never committed and never sent to a third-party API. With the operator's explicit approval it may be copied over SSH to a pod the operator controls, for training and evaluation only, and is deleted with that pod.
 - The labelled production calls (`data/private/*.parquet`, `data/private/labels/`) are never published anywhere, including Hugging Face, in any form: no clips, no parquet, no per-clip labels. Only aggregate metrics may leave the machine.
 - Secrets live in `.env` only; `.env.example` lists the keys.
