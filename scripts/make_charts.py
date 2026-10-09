@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Four per-group result charts as hand-drawn SVG (light and dark), ours vs Smart Turn v3.2, from the Stage 6 reports.
 SVGs render in GitHub and Hugging Face READMEs without any JavaScript; docs/charts.html is the interactive version."""
-import re, csv, json, collections, numpy as np
+import re, csv, json, collections, os, numpy as np
 LANGS = ["English","Hindi","Marathi","Bengali","Tamil","Telugu","Kannada","Malayalam","Gujarati","Punjabi","Odia","Assamese"]
 rows, aucs = {}, {}
 sec = open("reports/eval_all_test.md").read().split("## Clean test split")[1].split("### By dataset")[0]
@@ -57,3 +57,17 @@ for fname, short, key, label, bkey, blabel in GROUPS:
         open(f"docs/figures/{fname}-{theme}.svg", "w").write(svg(d, t))
     print(fname, "mean Δ %+.1f" % (np.mean(d["ours"]) - np.mean(d["baseline"])))
 json.dump(export, open("docs/figures/chart_data.json", "w"), indent=1)
+
+
+# Production-call chart (aggregate metrics only; the underlying data is never published).
+if os.path.exists("reports/private_headtohead.csv"):
+    import csv as _csv
+    prow = list(_csv.DictReader(open("reports/private_headtohead.csv")))
+    plangs = ["English","Hindi","Marathi","Bengali","Tamil","Telugu","Kannada","Malayalam","Gujarati","Odia"]
+    def _g(model, l, k): return float(next(r for r in prow if r["language"] == l and r["label"] == "gemini" and r["model"] == model)[k])
+    pd = {"title": "Production calls", "ours_label": "Indic Smart Turn base int8", "baseline_label": "Smart Turn v3.2 int8", "languages": plangs,
+          "ours": [round(_g("Indic base int8", l, "acc"), 1) for l in plangs], "baseline": [round(_g("Smart Turn v3.2 int8", l, "acc"), 1) for l in plangs],
+          "ours_auc": [round(_g("Indic base int8", l, "auc"), 3) for l in plangs], "baseline_auc": [round(_g("Smart Turn v3.2 int8", l, "auc"), 3) for l in plangs]}
+    for theme, t in THEMES.items():
+        open(f"docs/figures/production_base_int8-{theme}.svg", "w").write(svg(pd, t))
+    print("production_base_int8 mean Δ %+.1f" % (np.mean(pd["ours"]) - np.mean(pd["baseline"])))

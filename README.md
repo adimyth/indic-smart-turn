@@ -276,6 +276,52 @@ Two consequences for reading the charts:
 - **tiny int8** for constrained CPUs: same size and speed as Smart Turn v3.2, ahead in every Indian language.
 - Weakest languages: Assamese, Gujarati and Malayalam at 82 to 85%. They have the same data volume as the others, so the next lever is in-domain production audio.
 
+## Production calls
+
+The models were also tested on 1,200 real roleplay sessions from a voice-agent product: a trainee practising a sales pitch with a TTS agent, mixed into one mono track per session. This data is not published, in any form; only the aggregate numbers below leave the machine.
+
+**How the test set was made**
+
+- Each session was split into the trainee's and the agent's speech by voice. Sessions where the two could not be separated with confidence were excluded, about a quarter of them.
+- Every pause of 200 ms or more in the trainee's speech became a test clip: the last 8 s of trainee-only audio ending 0.2 s after the pause, the same cut as the training data.
+- Labels are `gemini-3.7-flash` audio verdicts, the same labeler as the public test set, so the two evaluations are directly comparable. 12,710 labelled test clips across ten languages, split by session.
+
+**Accuracy / ROC-AUC at the 0.5 threshold**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/production_base_int8-dark.svg">
+  <img alt="Production calls: Indic base int8 vs Smart Turn v3.2 int8" src="docs/figures/production_base_int8-light.svg" width="960">
+</picture>
+
+| Language | Test clips | Smart Turn v3.2 int8 | Indic tiny int8 | Indic base int8 |
+|---|---:|---|---|---|
+| Tamil | 991 | 61.9 / 0.755 | 70.5 / 0.819 | 78.7 / 0.875 |
+| Malayalam | 462 | 64.1 / 0.732 | 75.8 / 0.819 | 78.4 / 0.862 |
+| Bengali | 2116 | 64.7 / 0.769 | 70.3 / 0.814 | 77.5 / 0.859 |
+| Telugu | 1097 | 66.2 / 0.788 | 71.8 / 0.825 | 77.3 / 0.886 |
+| Marathi | 925 | 66.4 / 0.780 | 73.4 / 0.820 | 77.0 / 0.854 |
+| Odia * | 95 | 70.5 / 0.810 | 66.3 / 0.860 | 78.9 / 0.912 |
+| Hindi | 2165 | 68.9 / 0.797 | 75.0 / 0.837 | 78.8 / 0.876 |
+| Kannada | 367 | 64.3 / 0.778 | 67.8 / 0.819 | 74.1 / 0.864 |
+| Gujarati | 2006 | 68.6 / 0.770 | 76.2 / 0.840 | 76.5 / 0.857 |
+| English | 2486 | 67.6 / 0.752 | 71.2 / 0.794 | 75.2 / 0.829 |
+| **All** | 12710 | **66.6 / 0.771** | **72.7 / 0.821** | **77.1 / 0.859** |
+
+\* Odia: 95 clips from 2 sessions, indicative only.
+
+| | Smart Turn v3.2 int8 | Indic tiny int8 | Indic base int8 |
+|---|---|---|---|
+| Recall on complete turns | 84.5% | 84.5% | 85.7% |
+| Recall on incomplete turns | 52.8% | 63.6% | 70.4% |
+
+**What it shows**
+
+- Indic Smart Turn is ahead in every language, by 8 to 18 points of accuracy and 0.06 to 0.13 of AUC with the base int8 model, and by 4 to 12 points with tiny int8, which is the same size and speed as Smart Turn v3.2.
+- The gain sits where it did on the public data: both systems recognise a finished turn about equally (85% recall), ours is far better at recognising an unfinished one (71% against 53%).
+- All numbers are lower than on the public test set because a sales pitch has many more mid-sentence and sentence-final pauses than a conversation; both systems drop by a similar amount, and the gap between them is the result.
+
+**Limits.** For Kannada, Malayalam, Marathi, Tamil and Telugu the scored clips are the earliest sessions by file order rather than a random sample, because labelling was capped for cost. No human listened to the labels. The recordings are roleplay rhythm, not customer calls.
+
 ## Timings
 
 Everything measured on the runs that produced the shipped models.
