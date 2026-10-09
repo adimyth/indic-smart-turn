@@ -443,7 +443,7 @@ def load_private(config):
     train, test = [], {}
     for p in config["private_parquets"]:
         ds = load_dataset("parquet", data_files=p)["train"]; lang = ds[0]["language"]
-        tr = ds.filter(lambda r: r["split"] == "train", num_proc=4); te = ds.filter(lambda r: r["split"] == "test", num_proc=4)
+        tr = ds.filter(lambda sp: sp == "train", input_columns="split", num_proc=4); te = ds.filter(lambda sp: sp == "test", input_columns="split", num_proc=4)
         if len(tr): train.append(_std(tr))
         if len(te): test[f"private_{lang}"] = _std(te)
         log.info(f"private {lang}: train={len(tr)} test={len(te)}")
@@ -463,7 +463,7 @@ def prepare_datasets_finetune(feature_extractor, config):
     ta_train, ta_dev, ta_test = load_tamil_eot(config)
     ta_train = ta_train.shuffle(seed=42).select(range(min(config["ft_tamil_cap"], len(ta_train))))
     v32_train, v32_test = load_v32(config)
-    eng = v32_train.filter(lambda r: r["language"] == "eng", num_proc=8).shuffle(seed=42)
+    eng = v32_train.filter(lambda language: language == "eng", input_columns="language", num_proc=8).shuffle(seed=42)
     eng = eng.select(range(min(config["ft_eng_cap"], len(eng))))
     training = concatenate_datasets([private, public, ta_train, eng]).shuffle(seed=42)
     evaluation = concatenate_datasets(ind_dev + [ta_dev])
