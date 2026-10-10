@@ -325,12 +325,12 @@ After the public training run, the base model was tuned further on the productio
 
 **Result**, int8 files, accuracy / ROC-AUC:
 
-| Test set | Before tuning | After tuning |
+| Test set | Version 1 | Tuned (shipped) |
 |---|---|---|
-| Production calls, 12,710 clips | 78.0 / 0.855 | **80.0 / 0.876** |
-| Public test, 20,431 clips | 88.6 / 0.953 | **90.0 / 0.957** |
+| Production calls, 12,710 clips | 77.1 / 0.859 | **79.4 / 0.875** |
+| Public test, 20,431 clips | 89.9 / 0.955 | 89.8 / 0.958 |
 
-The tuned model gained on both and is ahead in 11 of 12 public languages (Odia, 331 clips, is 2.7 points lower). It replaces the original base files on Hugging Face as `indic-smart-turn-base-int8.onnx` and `indic-smart-turn-base-fp32.onnx`; the original files remain as `indic-smart-turn-base-int8-v1.onnx` and `indic-smart-turn-base-fp32-v1.onnx`. Full tables: `reports/eval_indic-base-ft_public.md` and `reports/eval_indic-base-ft_private.md`.
+The tuned model gains 2.3 points and 0.016 AUC on the production calls and holds the public result: accuracy is level, AUC is 0.003 higher, and per language it is ahead in eight of twelve and within a point behind on English, Marathi, Telugu and Odia. Both rows were scored on one machine with the same evaluator, so the two columns are directly comparable. It replaces the original base files on Hugging Face as `indic-smart-turn-base-int8.onnx` and `indic-smart-turn-base-fp32.onnx`; the original files remain as `indic-smart-turn-base-int8-v1.onnx` and `indic-smart-turn-base-fp32-v1.onnx`. Full tables: `reports/eval_shipped_public.md` and `reports/eval_shipped_private.md`.
 
 
 ## Verification

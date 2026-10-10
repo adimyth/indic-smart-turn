@@ -80,7 +80,7 @@ Pipecat's `LocalSmartTurnAnalyzerV3` loads the files and returns the same probab
 
 **What was done.** Training continued from the stage 3 checkpoint for one pass over 48,649 clips: the 20,649 production clips on which the recording and Gemini agree, mixed one-to-one with 20,000 public Indic clips plus small English and TamilEOT samples, at a learning rate five times lower than the original. The tuned model's probabilities sit lower across the board, so its best decision line, chosen on the production training split only, was 0.13. That shift was baked into the exported graph as a constant before the final sigmoid, so the shipped file works at the usual 0.5 and the ranking of clips is unchanged.
 
-**What was found.** Int8, accuracy / AUC: production calls 80.0 / 0.876 against 78.0 / 0.855 before tuning; public test 90.0 / 0.957 against 88.6 / 0.953. Ahead in eleven of twelve public languages. The tuned files replaced the originals on Hugging Face, with the originals kept under a `-v1` suffix.
+**What was found.** Int8, accuracy / AUC, both files scored on one machine: production calls 79.4 / 0.875 against 77.1 / 0.859 for the version 1 file; public test 89.8 / 0.958 against 89.9 / 0.955. A clear gain on the production calls and a tie on the public test, ahead in eight of twelve languages and within a point behind in the other four. The tuned files replaced the originals on Hugging Face, with the originals kept under a `-v1` suffix.
 
 ## Costs
 
