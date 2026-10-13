@@ -97,14 +97,6 @@ p = turn_complete_prob(audio)
 print("complete" if p > 0.5 else "incomplete", round(p, 3))
 ```
 
-## Rebuilding the training data
-
-The scripts in `indic_turn/` expect the clip index and labels under `data/`. Download them from the dataset repo:
-
-```bash
-hf download adimyth/indic-smart-turn-data --repo-type dataset --include "index/*" "labels/*" --local-dir data
-```
-
 ## License and attribution
 
 - **Code and models: BSD 2-Clause** (`LICENSE`), the same license as Pipecat Smart Turn. The files under `train/` are derived from Pipecat's trainer and keep its copyright notice (`train/LICENSE.pipecat`).
