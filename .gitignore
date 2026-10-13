@@ -1,0 +1,15 @@
+.env
+.venv/
+.pod_ssh
+data/
+models/
+output/
+references/
+reports/
+logs/
+__pycache__/
+*.bak
+*.mp4
+.claude/
+:memory:.ses
+.DS_Store

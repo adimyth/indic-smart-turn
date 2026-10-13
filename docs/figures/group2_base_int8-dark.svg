@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="960" height="600" fill="#1a1a19" rx="6"/>
+<text x="104" y="26" font-size="17" font-weight="600" fill="#f3f2ee">Indic Smart Turn base int8 vs Smart Turn v3.2 int8</text>
+<rect x="104" y="40" width="14" height="10" rx="2" fill="#3987e5"/><text x="124" y="49" font-size="12.5" fill="#c3c2b7">Indic Smart Turn base int8</text>
+<rect x="344" y="40" width="14" height="10" rx="2" fill="#d95926"/><text x="364" y="49" font-size="12.5" fill="#c3c2b7">Smart Turn v3.2 int8</text>
+<text x="104" y="66" font-size="11.5" fill="#8f8d85">Bars: accuracy on the clean test split, %. After each pair: difference in points, then ROC-AUC (ours / Smart Turn v3.2), which does not depend on the 0.5 threshold.</text>
+<line x1="104.0" x2="104.0" y1="76" y2="570" stroke="#2f2f2c" stroke-width="1"/>
+<text x="104.0" y="588" font-size="11.5" fill="#8f8d85" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">60</text>
+<line x1="270.5" x2="270.5" y1="76" y2="570" stroke="#2f2f2c" stroke-width="1"/>
+<text x="270.5" y="588" font-size="11.5" fill="#8f8d85" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">70</text>
+<line x1="437.0" x2="437.0" y1="76" y2="570" stroke="#2f2f2c" stroke-width="1"/>
+<text x="437.0" y="588" font-size="11.5" fill="#8f8d85" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">80</text>
+<line x1="603.5" x2="603.5" y1="76" y2="570" stroke="#2f2f2c" stroke-width="1"/>
+<text x="603.5" y="588" font-size="11.5" fill="#8f8d85" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">90</text>
+<line x1="770.0" x2="770.0" y1="76" y2="570" stroke="#2f2f2c" stroke-width="1"/>
+<text x="770.0" y="588" font-size="11.5" fill="#8f8d85" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">100</text>
+<text x="92" y="100.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">English</text>
+<path d="M104.0,81 h560.4 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-560.4 z" fill="#3987e5"/>
+<path d="M104.0,97 h567.1 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-567.1 z" fill="#d95926"/>
+<text x="683.1" y="100.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">-0.4</text>
+<text x="952" y="100.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.99 / 0.98</text>
+<text x="92" y="140.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Hindi</text>
+<path d="M104.0,121 h520.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-520.5 z" fill="#3987e5"/>
+<path d="M104.0,137 h425.6 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-425.6 z" fill="#d95926"/>
+<text x="636.5" y="140.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+5.7</text>
+<text x="952" y="140.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.97 / 0.94</text>
+<text x="92" y="180.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Marathi</text>
+<path d="M104.0,161 h463.9 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-463.9 z" fill="#3987e5"/>
+<path d="M104.0,177 h290.7 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-290.7 z" fill="#d95926"/>
+<text x="579.9" y="180.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+10.4</text>
+<text x="952" y="180.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.95 / 0.86</text>
+<text x="92" y="220.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Bengali</text>
+<path d="M104.0,201 h442.2 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-442.2 z" fill="#3987e5"/>
+<path d="M104.0,217 h352.3 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-352.3 z" fill="#d95926"/>
+<text x="558.2" y="220.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+5.4</text>
+<text x="952" y="220.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.94 / 0.88</text>
+<text x="92" y="260.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Tamil</text>
+<path d="M104.0,241 h440.6 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-440.6 z" fill="#3987e5"/>
+<path d="M104.0,257 h162.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-162.5 z" fill="#d95926"/>
+<text x="556.6" y="260.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+16.7</text>
+<text x="952" y="260.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.92 / 0.75</text>
+<text x="92" y="300.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Telugu</text>
+<path d="M104.0,281 h408.9 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-408.9 z" fill="#3987e5"/>
+<path d="M104.0,297 h177.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-177.5 z" fill="#d95926"/>
+<text x="524.9" y="300.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+13.9</text>
+<text x="952" y="300.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.92 / 0.77</text>
+<text x="92" y="340.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Kannada</text>
+<path d="M104.0,321 h480.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-480.5 z" fill="#3987e5"/>
+<path d="M104.0,337 h229.1 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-229.1 z" fill="#d95926"/>
+<text x="596.5" y="340.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+15.1</text>
+<text x="952" y="340.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.92 / 0.78</text>
+<text x="92" y="380.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Malayalam</text>
+<path d="M104.0,361 h422.2 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-422.2 z" fill="#3987e5"/>
+<path d="M104.0,377 h59.3 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-59.3 z" fill="#d95926"/>
+<text x="538.2" y="380.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+21.8</text>
+<text x="952" y="380.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.87 / 0.66</text>
+<text x="92" y="420.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Gujarati</text>
+<path d="M104.0,401 h447.2 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-447.2 z" fill="#3987e5"/>
+<path d="M104.0,417 h204.1 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-204.1 z" fill="#d95926"/>
+<text x="563.2" y="420.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+14.6</text>
+<text x="952" y="420.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.90 / 0.77</text>
+<text x="92" y="460.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Punjabi</text>
+<path d="M104.0,441 h437.2 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-437.2 z" fill="#3987e5"/>
+<path d="M104.0,457 h152.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-152.5 z" fill="#d95926"/>
+<text x="553.2" y="460.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+17.1</text>
+<text x="952" y="460.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.89 / 0.75</text>
+<text x="92" y="500.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Odia</text>
+<path d="M104.0,481 h450.5 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-450.5 z" fill="#3987e5"/>
+<path d="M104.0,497 h249.1 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-249.1 z" fill="#d95926"/>
+<text x="566.5" y="500.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+12.1</text>
+<text x="952" y="500.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.93 / 0.78</text>
+<text x="92" y="540.5" font-size="13.5" fill="#f3f2ee" text-anchor="end">Assamese</text>
+<path d="M104.0,521 h383.9 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-383.9 z" fill="#3987e5"/>
+<path d="M104.0,537 h77.6 a4,4 0 0 1 4,4 v5 a4,4 0 0 1 -4,4 h-77.6 z" fill="#d95926"/>
+<text x="499.9" y="540.5" font-size="12.5" fill="#c3c2b7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+18.4</text>
+<text x="952" y="540.5" font-size="11.5" fill="#8f8d85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" text-anchor="end">AUC 0.89 / 0.69</text>
+</svg>
